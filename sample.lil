@@ -13,14 +13,14 @@ void fun()
 int main() {
     ; this is variable declaration
      array tmparray[100]
-	  int i =  0, k = 34;
+	  int i =  0, k = 34
      for (ele : tmparray) {
 	 i = i + 1
 	 ele = i * i
      }
 
      while (i > 0 ) {
-	 tmparray[i] = i + i;
+	 tmparray[i] = i + i
 	 i = i -1
       }
 
