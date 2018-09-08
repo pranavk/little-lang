@@ -1,0 +1,8 @@
+int main()
+{
+	array tmparray[100]
+	int i
+	for (i : tmparray) {
+		tmparray[i] = i * i
+	}
+}

@@ -1,0 +1,15 @@
+int fun() {
+	print("hello world\n")
+	return 99
+}
+
+
+int main()
+{
+	array tmparray[100];
+	for (id : tmparray) {
+		tmparray[id] = id * fun()
+	}
+
+	return fun()	
+}
