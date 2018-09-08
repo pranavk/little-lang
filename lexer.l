@@ -68,30 +68,3 @@ NUMBER [-]?{DIGIT}+
 .                          { printf("(%s:ERR)", yytext); }
 
 %%
-
-int main(int argc, char* argv[]) {
-    std::string filename;
-    if (argc <= 1) {
-        std::cerr << "error: provide file name as first argument" << std::endl;
-        return 1;
-    }
-    filename = std::string(argv[1]);
-    std::cout << "Parsing file: " << filename << std::endl;
-
-    // first pass
-    FILE* fp = nullptr;
-    if (!filename.empty())
-        fp = fopen(filename.c_str(), "r");
-    yyrestart(fp);
-    while (yylex() != EOF);
-
-    // second pass
-    rewind(fp);
-    yyrestart(fp);
-    while (yylex() != EOF);
-
-    fclose(fp);
-   
-    return 0;
-}
-
