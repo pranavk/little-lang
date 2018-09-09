@@ -1,3 +1,8 @@
-int main() {
-	int test
+int main(array a, bool b, int c) {
+
+}
+
+void fun(array b, int c)
+{
+
 }

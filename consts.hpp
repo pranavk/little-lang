@@ -1,4 +1,22 @@
+#pragma once
+
 #include <string>
+
+enum class ExceptionType 
+{
+    Parser
+};
+
+class Exception : public std::runtime_error 
+{
+    ExceptionType type;
+    public:
+        Exception(std::string msg) :
+            std::runtime_error(msg), type(ExceptionType::Parser) { };
+        void print() {
+            std::cout << "parser error: " << std::string(what()) << std::endl;
+        }
+};
 
 enum class Token
 {
@@ -25,9 +43,11 @@ enum class Token
     CL, // curly left - {
     CR, // curly right - }
     SL, // square left - [
-    SR // square right - ]
+    SR, // square right - ]
+    Comma
 };
 
 extern std::string strval;
 
 int yylex();
+void yyrestart(FILE* fp);

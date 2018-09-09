@@ -1,66 +1,163 @@
-#include <consts.hpp>
 #include <string>
 #include <iostream>
-#include <baseast.hpp>
 #include <memory>
-#include "lex.yy.c"
+
+#include "consts.hpp"
+#include "baseast.hpp"
+
+// contains all functions 
+static std::vector<std::unique_ptr<AST::FunctionDefinition>> fnDefinitions;
 
 // check lexer.l to see how strval is used
 std::string strval;
 
-int nexttok = -1;
-std::string nextval;
+int curTok = -1;
+std::string curVal;
 
-int peek()
+int getNextTok()
 {
-    if (nexttok == -1)
-    {
-	    nexttok = static_cast<int>(yylex());
-	    nextval = strval;
-	    std::cout << "nexttok: " << nexttok << "(" << nextval << ")" << std::endl;
-    }
+	curTok = static_cast<int>(yylex());
+	curVal = strval;
+//	std::cout << "nexttok: " << curTok << "(" << curVal << ")" << std::endl;
 
-    return nexttok;
+    return curTok;
 }
 
-bool match(Token tok)
+void skipEOLs()
 {
+    while (curTok == static_cast<int>(Token::EOL) && getNextTok());
+}
+
+bool match(int tok)
+{
+    // are we trying to match EOL?
+    if (tok != static_cast<int>(Token::EOL))
+        skipEOLs();
+    
     bool match = false;
-    if (tok == peek())
+    if (tok == curTok)
     {
-	    nexttok = -1;
-	    nextval = "";
+        // discard the curTok now
+        getNextTok(); 
 	    match = true;
     }
     return match;
 }
 
+bool isTokenType(int tok)
+{
+    bool result;
+    switch(tok) {
+        case static_cast<int>(Token::Type_array):
+        case static_cast<int>(Token::Type_int):
+        case static_cast<int>(Token::Type_bool):
+        case static_cast<int>(Token::Type_void):
+            result = true;
+        break;
+        default:
+            result = false;
+    }
+
+    return result;
+}
+
+bool parseFnArgs(std::vector<AST::FnArg>& args)
+{
+    // consume left parenthesis first
+    bool res = match(static_cast<int>(Token::PL));
+
+    while (res && curTok != static_cast<int>(Token::PR)) 
+    {
+        // consume a "," if it's there
+        match(static_cast<int>(Token::Comma));
+
+        AST::FnArg arg;
+        res = false;
+        if (isTokenType(curTok))
+        {
+            arg.type = static_cast<Token>(curTok);
+            if (getNextTok() == static_cast<int>(Token::Id))
+            {
+                arg.name = strval;
+                res = true;
+            }
+        }
+
+        if (res) {
+            args.push_back(arg);
+            getNextTok();
+        }
+        else
+            throw Exception("error parsing function arguments");
+    }
+
+    res = res && match(static_cast<int>(Token::PR));
+
+    return res;
+}
+
 std::unique_ptr<AST::FunctionDefinition> parseFnDef() 
 {
+    std::vector<AST::FnArg> args;
+    std::string fnName;
+    int fnType;
+    if (isTokenType(fnType = curTok) && 
+        (getNextTok() == static_cast<int>(Token::Id)) && !((fnName = curVal).empty()) &&
+        getNextTok() && parseFnArgs(args))
+    {
+        std::unique_ptr<AST::FunctionPrototype> proto(
+            new AST::FunctionPrototype(fnType, fnName, args));
+        return std::make_unique<AST::FunctionDefinition>(std::move(proto), nullptr);
+    }
 
+    throw Exception("cannot parse function arguments");
+    return nullptr;
 }
 
-bool parseFn(AST::FunctionDefinition& fnDef) 
+bool skipFnBody()
 {
+    bool res = match(static_cast<int>(Token::CL));
+    int parenDepth = 0;
+    if (res)
+        parenDepth = 1;
 
-    return true;
+    while (res && parenDepth > 0) {
+        if (curTok == static_cast<int>(Token::CL))
+            parenDepth++;
+        else if (curTok == static_cast<int>(Token::CR))
+            parenDepth--;
+        getNextTok();
+    }
+
+    return res;
 }
 
-bool parseProgram() 
+
+void parseProgram1() 
 {
-    bool result = true;
-    
-    // gather all function definition in first parse
-    std::vector<std::unique_ptr<AST::FunctionDefinition>> fnDefinitions;
+    getNextTok();
     while (auto fnDef = parseFnDef())
     {
         fnDefinitions.push_back(std::move(fnDef));
+        if (!skipFnBody())
+            throw Exception("couldn't skip function body during 1st parse.");
+        skipEOLs();
+
+        if (curTok == EOF)
+            break;
+    } 
+}
+
+void parseProgram2()
+{
+    
+
+    std::cout << "Number of function we have: " << fnDefinitions.size() << std::endl;
+    for (int i = 0; i < fnDefinitions.size(); i++) {
+        fnDefinitions[i]->print();
     }
 
-    // parse each function's body now
-  
-
-    return result;
+    getNextTok();
 }
 
 int main(int argc, char* argv[]) {
@@ -77,15 +174,23 @@ int main(int argc, char* argv[]) {
     if (!filename.empty())
         fp = fopen(filename.c_str(), "r");
     yyrestart(fp);
-    while (yylex() != EOF)
-    {
 
+    try {
+        parseProgram1();
+    } catch(Exception& exc) {
+        exc.print();
+        return 1;
     }
 
     // second pass
     rewind(fp);
     yyrestart(fp);
-    while (yylex() != EOF);
+    try {
+        parseProgram2();
+    } catch(Exception& exc) {
+        exc.print();
+        return 1;
+    }
 
     fclose(fp);
    

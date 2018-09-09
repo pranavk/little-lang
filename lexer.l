@@ -21,8 +21,8 @@ NUMBER [-]?{DIGIT}+
 ")"                        { printf(")"); return static_cast<int>(Token::PR); }
 "["                        { printf("["); }
 "]"                        { printf("]"); }
-"{"                        { printf("{"); }
-"}"                        { printf("}"); }
+"{"                        { printf("{"); return static_cast<int>(Token::CL); }
+"}"                        { printf("}"); return static_cast<int>(Token::CR); }
 "+"                        { printf("+"); }
 "-"                        { printf("-"); }
 "*"                        { printf("*"); }
@@ -40,7 +40,7 @@ NUMBER [-]?{DIGIT}+
 ":"                        { printf(":"); }
 "?"                        { printf("?"); }
 "!"                        { printf("!"); }
-","                        { printf(","); }
+","                        { printf(","); return static_cast<int>(Token::Comma); }
 \".*\"                     { printf("(slit:%s)", yytext); }
 
 "bool"                     { printf("bool"); strval = "bool"; return static_cast<int>(Token::Type_bool); }
@@ -64,6 +64,7 @@ NUMBER [-]?{DIGIT}+
 ;.*                        { printf("<Comment:\"%s\">", yytext); }
 {NUMBER}                   { printf("(%s:NUMBER)", yytext); strval = std::string(yytext); return static_cast<int>(Token::Number); }
 {ID}                       { printf("(%s:ID)", yytext); strval = std::string(yytext); return static_cast<int>(Token::Id); }
+<<EOF>>                    { return -1; }
 
 .                          { printf("(%s:ERR)", yytext); }
 
