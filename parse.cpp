@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <cassert>
 
 #include "consts.hpp"
 #include "baseast.hpp"
@@ -47,6 +48,15 @@ bool match(int tok)
 bool match(Token tok) 
 {
     return match(static_cast<int>(tok));
+}
+
+bool strict_match(Token tok) 
+{
+    bool res = false;
+    if (!(res = match(tok)))
+        throw Exception("Expected " + std::to_string(static_cast<int>(tok)) +
+                         ", found " + std::to_string(curTok));
+    return res;
 }
 
 bool isTokenType(int tok)
@@ -165,22 +175,112 @@ void skipToFnBody() {
     while (curTok != static_cast<int>(Token::CL) && getNextTok());
 }
 
-void parseStmt() 
+std::unique_ptr<AST::BaseStmt> parseVarDecls()
 {
-    
+    Token varType = static_cast<Token>(curTok);
+    match(curTok); // cosume 'type'
+
+    std::unique_ptr<AST::VarDeclStmt> varDeclStmt(new AST::VarDeclStmt);
+    while (curTok == static_cast<int>(Token::Id)) 
+    {
+        std::string varName = curVal;
+        match(Token::Id); // consume 'id'
+
+        varDeclStmt->decls.push_back({varType, varName});
+
+        // check if you got a comma without skipping EOLs
+        if (curTok == static_cast<int>(Token::Comma))
+            match(Token::Comma);
+    }
+
+    if (curTok != static_cast<int>(Token::EOL))
+        throw Exception("expected EOL; got something else.");
+    else if (varDeclStmt->decls.size() < 1)
+        throw Exception("at least one variable should be declared.");
+
+    match(Token::EOL);
+    return varDeclStmt;
+}
+
+std::unique_ptr<AST::BaseExpr> parseExpr() 
+{
+    return nullptr;
+}
+
+std::unique_ptr<AST::BaseStmt> parseArrayDecls()
+{
+    const Token type = Token::Type_array;
+    match(Token::Type_array); // consume 'array'
+
+    std::unique_ptr<AST::ArrayDeclStmt> arrayDeclStmt(new AST::ArrayDeclStmt);
+    while (curTok == static_cast<int>(Token::Id)) 
+    {
+        std::string varName = curVal;
+        match(Token::Id); // consume 'id'
+
+        auto arrayExpr = parseExpr();
+        // parseExpr should throw exception if it isn't able to parse
+        assert(arrayExpr != nullptr);
+
+        arrayDeclStmt->decls.push_back({varName, std::move(arrayExpr)});
+
+        // consume if we got a comma
+        match(Token::Comma);
+    }
+
+    if (curTok != static_cast<int>(Token::EOL))
+        throw Exception("expected EOL; got something else.");
+    else if (arrayDeclStmt->decls.size() < 1)
+        throw Exception("at least one array should be declared.");
+
+    match(Token::EOL);
+    return arrayDeclStmt;
+}
+
+std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock();
+
+std::unique_ptr<AST::BaseStmt> parseStmt() 
+{
+    switch(curTok) 
+    {
+        case static_cast<int>(Token::CL):
+            return parseStmtBlock();
+            break;
+        case static_cast<int>(Token::Type_int):
+        case static_cast<int>(Token::Type_bool):
+        case static_cast<int>(Token::Type_void):
+            return parseVarDecls();
+            break;
+        case static_cast<int>(Token::Type_array):
+            return parseArrayDecls();
+            break;
+        case static_cast<int>(Token::Print):
+            
+        case static_cast<int>(Token::EOL):
+            strict_match(Token::EOL);
+            return nullptr;
+            break;
+        default:
+            throw Exception("unsupported syntax");
+    }
 }
 
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock()
 {
     match(static_cast<int>(Token::CL));
+    strict_match(Token::EOL); // we want a '\n' no matter what
+
+    std::unique_ptr<AST::StmtBlockStmt> blockStmt(new AST::StmtBlockStmt);
     while (curTok != static_cast<int>(Token::CR)) 
     {
-        parseStmt();
+        auto stmt = parseStmt();
+        if (stmt)
+            blockStmt->stmt_list.push_back(std::move(stmt));
     }
 
     match(static_cast<int>(Token::CR));
 
-    return nullptr;
+    return blockStmt;
 }
 
 std::unique_ptr<AST::BaseStmt> parseFnBody()
@@ -230,6 +330,7 @@ int main(int argc, char* argv[]) {
     try {
         parseProgram1();
     } catch(Exception& exc) {
+        std::cerr << curTok << " " << curVal << std::endl;
         exc.print();
         return 1;
     }
@@ -240,6 +341,7 @@ int main(int argc, char* argv[]) {
     try {
         parseProgram2();
     } catch(Exception& exc) {
+        std::cerr << curTok << " " << curVal << std::endl;
         exc.print();
         return 1;
     }

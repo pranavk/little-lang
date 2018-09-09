@@ -80,7 +80,8 @@ namespace AST {
 
     // stmt -> { stmt* }
     class StmtBlockStmt : public BaseStmt {
-        std::vector<BaseStmt> stmt_list;
+        public:
+        std::vector<std::unique_ptr<AST::BaseStmt>> stmt_list;
     };
 
     class VarDecl {
@@ -89,17 +90,21 @@ namespace AST {
         std::string name;
     };
 
+    class ArrayExpr;
+    // array id[expr]
     class ArrayDecl {
         public:
         std::string name;
-        int size;
+        std::unique_ptr<BaseExpr> expr;
     };
 
     class VarDeclStmt : public BaseStmt {
+        public:
         std::vector<VarDecl> decls;
     };
 
     class ArrayDeclStmt : public BaseStmt {
+        public:
         std::vector<ArrayDecl> decls;
     };
 

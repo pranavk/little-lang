@@ -1,7 +1,7 @@
 
 
-int main(array a, bool b, int c) sd {
-
+int main(array a, bool b, int c) {
+	int a, b,c
 }
 
 void fun(array b, int c)
