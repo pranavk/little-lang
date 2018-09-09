@@ -5,3 +5,5 @@
 + parse : void fun(, ) { sdf sd; }
 
 + push some EOLs in the start of program
+
++ try to assign a string to variable - should be an error

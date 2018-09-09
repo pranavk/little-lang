@@ -41,7 +41,7 @@ NUMBER [-]?{DIGIT}+
 "?"                        { printf("?"); return static_cast<int>(Token::Op_question); }
 "!"                        { printf("!"); return static_cast<int>(Token::Op_bang); }
 ","                        { printf(","); return static_cast<int>(Token::Comma); }
-\".*\"                     { printf("(slit:%s)", yytext); }
+\".*\"                     { printf("(slit:%s)", yytext); return static_cast<int>(Token::Literal_string); }
 
 "bool"                     { printf("bool"); strval = "bool"; return static_cast<int>(Token::Type_bool); }
 "int"                      { printf("int"); strval = "int"; return static_cast<int>(Token::Type_int); }
@@ -54,6 +54,7 @@ NUMBER [-]?{DIGIT}+
 "input"                    { printf("input;"); return static_cast<int>(Token::Input); }
 "print"                    { printf("print"); return static_cast<int>(Token::Print); }
 "if"                       { printf("if"); return static_cast<int>(Token::If); }
+"else"                     { printf("else"); return static_cast<int>(Token::Else); }
 "while"                    { printf("while"); return static_cast<int>(Token::While); }
 "for"                      { printf("for"); return static_cast<int>(Token::For); }
 "return"                   { printf("return"); return static_cast<int>(Token::Return); }

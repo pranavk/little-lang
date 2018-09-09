@@ -60,6 +60,12 @@ namespace AST {
         virtual ~BaseValue() = default;
     };
 
+    class StringValue : public BaseValue {
+        std::string value;
+        public:
+        StringValue(std::string& value) : value(value) { }
+    };
+
     class BoolValue : public BaseValue {
         bool value;
         public:
@@ -79,6 +85,13 @@ namespace AST {
         BaseExpr(std::unique_ptr<BaseValue> result)
             : result(std::move(result)) { }
         BaseExpr() {}
+    };
+
+    // expr -> [ID]
+    class IdExpr : public BaseExpr {
+        std::string name;
+        public:
+        IdExpr(std::string& name) : name(name) { }
     };
 
     // stmt -> { stmt* }
@@ -115,6 +128,76 @@ namespace AST {
         std::vector<std::unique_ptr<BaseExpr>> args;
     };
 
+    class IdExpr;
+
+    class IfStmt : public BaseStmt {
+        std::unique_ptr<BaseExpr> cond;
+        std::unique_ptr<StmtBlockStmt> trueStmt;
+        std::unique_ptr<StmtBlockStmt> falseStmt;
+        public:
+        IfStmt(std::unique_ptr<BaseExpr>& cond,
+               std::unique_ptr<StmtBlockStmt>& trueStmt,
+               std::unique_ptr<StmtBlockStmt>& falseStmt)
+               : cond(std::move(cond))
+               , trueStmt(std::move(trueStmt))
+               , falseStmt(std::move(falseStmt)) { }
+    };
+
+    class WhileStmt : public BaseStmt {
+        std::unique_ptr<BaseExpr> cond;
+        std::unique_ptr<StmtBlockStmt> body;
+        public:
+        WhileStmt(std::unique_ptr<BaseExpr>& cond,
+                  std::unique_ptr<StmtBlockStmt>& body)
+                  : cond(std::move(cond))
+                  , body(std::move(body)) { }
+    };
+
+    class ForStmt : public BaseStmt {
+        std::unique_ptr<BaseExpr> ident;
+        std::unique_ptr<BaseExpr> container;
+        std::unique_ptr<StmtBlockStmt> body;
+        public:
+        ForStmt(std::unique_ptr<BaseExpr>& ident,
+                std::unique_ptr<BaseExpr>& container,
+                std::unique_ptr<StmtBlockStmt>& body)
+                : ident(std::move(ident))
+                , container(std::move(container))
+                , body(std::move(body)) { }
+    };
+
+    class ReturnStmt : public BaseStmt {
+        std::unique_ptr<BaseExpr> returnExpr;
+        public:
+        ReturnStmt(std::unique_ptr<BaseExpr>& returnExpr)
+                    : returnExpr(std::move(returnExpr)) { }
+    };
+
+    class ArrayAssignment : public BaseStmt {
+        // name[idxExpr] = expr
+        std::string name;
+        std::unique_ptr<BaseExpr> idxExpr;
+        std::unique_ptr<BaseExpr> expr;
+        public:
+        ArrayAssignment(std::string& name, 
+                        std::unique_ptr<BaseExpr>& idxExpr,
+                        std::unique_ptr<BaseExpr>& expr)
+                        : name(name)
+                        , idxExpr(std::move(idxExpr))
+                        , expr(std::move(expr)) { }
+    };
+
+    class VarAssignment : public BaseStmt {
+        // name = expr
+        std::string name;
+        std::unique_ptr<BaseExpr> expr;
+        public:
+        VarAssignment(std::string& name,
+                      std::unique_ptr<BaseExpr>& expr)
+                      : name(name)
+                      , expr(std::move(expr)) { }
+    };
+
     // expr -> [number]
     class NumExpr : public BaseExpr {
     };
@@ -123,13 +206,7 @@ namespace AST {
     
     };
 
-    // expr -> [ID]
-    class IdExpr : public BaseExpr {
-        std::string name;
-        public:
-        IdExpr(std::string& name) : name(name) { }
-    };
-
+ 
     class TernaryExpr : public BaseExpr {
         std::unique_ptr<BaseExpr> condExpr;
         std::unique_ptr<BaseExpr> trueExpr;
@@ -151,6 +228,17 @@ namespace AST {
                   std::unique_ptr<BaseExpr> rightExpr) 
                   : leftExpr(std::move(leftExpr))
                   , rightExpr(std::move(rightExpr)) { }
+    };
+
+    class UnaryExpr : public BaseExpr {
+        Token type;
+        std::unique_ptr<BaseExpr> expr;
+        // (type expr)
+        public:
+        UnaryExpr(Token type,
+                  std::unique_ptr<BaseExpr>& expr)
+                  : type(type)
+                  , expr(std::move(expr)) { }
     };
 
     class SizeofExpr : public BaseExpr {

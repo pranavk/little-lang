@@ -1,8 +1,33 @@
 int main(array a, bool b, int c) {
 	int a, b,c
+	c = false
+	return a
 }
 
 void fun(array b, int c)
 {
+	int b
+	b = 3111
+	array c[32], b[231], b[121]
+	c[4] = 323
+	c[9] = false
+	bool val
 
+	if ((b < 323)) {
+		c = 32
+	}
+
+	while ((a < 10)) {
+		a = (a - 1)
+		a = (- a)
+	}
+
+	int i
+	i = 0
+	for (d : c) {
+		d = (i * i)
+		i = (i + 1)
+	}
+
+	val = false
 }
