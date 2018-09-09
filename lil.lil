@@ -1,5 +1,3 @@
-
-
 int main(array a, bool b, int c) {
 	int a, b,c
 }

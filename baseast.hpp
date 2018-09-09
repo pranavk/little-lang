@@ -13,7 +13,7 @@ namespace AST {
         virtual ~BaseStmt() = default;
     };
 
-    class FnArg {
+    class FnParam {
         public:
         Token type;
         std::string name;
@@ -23,14 +23,14 @@ namespace AST {
         public:
         Token fnType;
         std::string fnName;
-        std::vector<FnArg> fnArgs;
+        std::vector<FnParam> fnParams;
 
         FunctionPrototype(int fnType, 
                           std::string& name, 
-                          std::vector<FnArg>& args)
+                          std::vector<FnParam>& params)
             : fnType(static_cast<Token>(fnType)), 
               fnName(name), 
-              fnArgs(args) { }
+              fnParams(params) { }
     };
 
     class FunctionDefinition {
@@ -48,7 +48,7 @@ namespace AST {
             std::cout << "FnName: " << proto->fnName << std::endl;
             std::cout << "FnType: " << static_cast<int>(proto->fnType) << std::endl;
             std::cout << "Args :" << std::endl;
-            for (auto arg: proto->fnArgs) {
+            for (auto arg: proto->fnParams) {
                 std::cout << arg.name << " " << static_cast<int>(arg.type);
                 std::cout << std::endl;
             }
@@ -62,20 +62,23 @@ namespace AST {
 
     class BoolValue : public BaseValue {
         bool value;
-        virtual ~BoolValue() = default;
+        public:
+        BoolValue(bool value) : value(value) { }
     };
 
     class IntValue : public BaseValue {
         int value;
         public:
-        virtual ~IntValue() = default;
+        IntValue(int value) : value(value) { }
     };
 
     // various types of statements
     class BaseExpr : public BaseStmt {
-        BaseValue result;
+        std::unique_ptr<BaseValue> result;
         public:
-        virtual ~BaseExpr() = default;
+        BaseExpr(std::unique_ptr<BaseValue> result)
+            : result(std::move(result)) { }
+        BaseExpr() {}
     };
 
     // stmt -> { stmt* }
@@ -108,32 +111,82 @@ namespace AST {
         std::vector<ArrayDecl> decls;
     };
 
+    class PrintStmt : public BaseStmt {
+        std::vector<std::unique_ptr<BaseExpr>> args;
+    };
+
     // expr -> [number]
     class NumExpr : public BaseExpr {
-        public:
-        virtual ~NumExpr() = default;
+    };
+
+    class LiteralExpr : public BaseExpr {
+    
     };
 
     // expr -> [ID]
     class IdExpr : public BaseExpr {
         std::string name;
         public:
-        virtual ~IdExpr() = default;
+        IdExpr(std::string& name) : name(name) { }
+    };
+
+    class TernaryExpr : public BaseExpr {
+        std::unique_ptr<BaseExpr> condExpr;
+        std::unique_ptr<BaseExpr> trueExpr;
+        std::unique_ptr<BaseExpr> falseExpr;
+        public:
+        TernaryExpr(std::unique_ptr<BaseExpr> condExpr,
+                    std::unique_ptr<BaseExpr> trueExpr,
+                    std::unique_ptr<BaseExpr> falseExpr)
+                    : condExpr(std::move(condExpr))
+                    , trueExpr(std::move(trueExpr))
+                    , falseExpr(std::move(falseExpr)) { }
+    };
+
+    class BinopExpr : public BaseExpr {
+        std::unique_ptr<BaseExpr> leftExpr;
+        std::unique_ptr<BaseExpr> rightExpr;
+        public:
+        BinopExpr(std::unique_ptr<BaseExpr> leftExpr,
+                  std::unique_ptr<BaseExpr> rightExpr) 
+                  : leftExpr(std::move(leftExpr))
+                  , rightExpr(std::move(rightExpr)) { }
+    };
+
+    class SizeofExpr : public BaseExpr {
+        std::string name;
+        public:
+        SizeofExpr(std::string name) : name(name) { }
+    };
+
+    class InputExpr : public BaseExpr {
+
     };
 
     // expr -> arr[expr]
     class ArrayExpr : public BaseExpr {
         std::string name;
-        BaseExpr index;
+        std::unique_ptr<BaseExpr> expr;
         public:
-        virtual ~ArrayExpr() = default;
+        ArrayExpr(std::string name, std::unique_ptr<BaseExpr> expr)
+                : name(name)
+                , expr(std::move(expr)) { }
     };
 
     // expr -> fun(bool a, int b)
     class FnCallExpr : public BaseExpr {
         std::string name; // fn name
-        std::vector<FnArg> fnArgs;
+        std::vector<std::unique_ptr<BaseExpr>> fnArgs;
         public:
-        virtual ~FnCallExpr() = default;
-    };  
+        FnCallExpr(std::string name, 
+                   std::vector<std::unique_ptr<BaseExpr>>& fnArgs1)
+                   : name(name)
+                   {
+                       fnArgs.clear();
+                       for (int i = 0; i < fnArgs1.size(); i++) 
+                       {
+                           fnArgs.push_back(std::move(fnArgs1[i]));
+                       }
+                   }
+    };
 }

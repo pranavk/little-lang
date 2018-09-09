@@ -50,6 +50,48 @@ bool match(Token tok)
     return match(static_cast<int>(tok));
 }
 
+bool isBinOp()
+{ 
+    bool res = false;
+    switch(static_cast<Token>(curTok))
+    {
+        case Token::Op_add:
+        case Token::Op_minus:
+        case Token::Op_mult:
+        case Token::Op_divide:
+        case Token::Op_exp:
+        case Token::Op_mod:
+        case Token::Op_and:
+        case Token::Op_or:
+        case Token::Op_eqeq:
+        case Token::Op_neq:
+        case Token::Op_gt:
+        case Token::Op_gte:
+        case Token::Op_lt:
+        case Token::Op_lte:
+            res = true;
+        default:
+            res = false;
+    }
+
+    return res;
+}
+
+bool isUnaryOp()
+{
+    bool res = false;
+    switch(static_cast<Token>(curTok))
+    {
+        case Token::Op_bang:
+        case Token::Op_minus:
+            res = true;
+        default:
+            res = false;
+    }
+
+    return res;
+}
+
 bool strict_match(Token tok) 
 {
     bool res = false;
@@ -76,30 +118,31 @@ bool isTokenType(int tok)
     return result;
 }
 
-bool parseFnArgs(std::vector<AST::FnArg>& args)
+bool parseFnParams(std::vector<AST::FnParam>& args)
 {
     // consume left parenthesis first
     bool res = match(static_cast<int>(Token::PL));
-
+    bool first = true;
     while (res && curTok != static_cast<int>(Token::PR)) 
     {
-        // consume a "," if it's there
-        match(static_cast<int>(Token::Comma));
+        // consume a "," if it's not the first iteration
+        if (!first) strict_match(Token::Comma);
 
-        AST::FnArg arg;
+        AST::FnParam param;
         res = false;
         if (isTokenType(curTok))
         {
-            arg.type = static_cast<Token>(curTok);
+            param.type = static_cast<Token>(curTok);
             if (getNextTok() == static_cast<int>(Token::Id))
             {
-                arg.name = strval;
+                param.name = strval;
                 res = true;
             }
         }
 
+        first = false;
         if (res) {
-            args.push_back(arg);
+            args.push_back(param);
             getNextTok();
         }
         else
@@ -113,15 +156,15 @@ bool parseFnArgs(std::vector<AST::FnArg>& args)
 
 std::unique_ptr<AST::FunctionDefinition> parseFnDef() 
 {
-    std::vector<AST::FnArg> args;
+    std::vector<AST::FnParam> params;
     std::string fnName;
     int fnType;
     if (isTokenType(fnType = curTok) && 
         (getNextTok() == static_cast<int>(Token::Id)) && !((fnName = curVal).empty()) &&
-        getNextTok() && parseFnArgs(args))
+        getNextTok() && parseFnParams(params))
     {
         std::unique_ptr<AST::FunctionPrototype> proto(
-            new AST::FunctionPrototype(fnType, fnName, args));
+            new AST::FunctionPrototype(fnType, fnName, params));
         return std::make_unique<AST::FunctionDefinition>(std::move(proto), nullptr);
     }
 
@@ -202,8 +245,134 @@ std::unique_ptr<AST::BaseStmt> parseVarDecls()
     return varDeclStmt;
 }
 
+std::unique_ptr<AST::BaseExpr> parseExpr();
+
+void parseFnArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& fnArgs)
+{
+    strict_match(Token::PL);
+    bool first = true;
+    while (curTok != static_cast<int>(Token::PR)) 
+    {
+        // consume comma if it's not the first iteration.
+        if (!first) strict_match(Token::Comma);
+        
+        auto expr = parseExpr();
+        fnArgs.push_back(std::move(expr));       
+
+        first = false;
+    }
+
+    strict_match(Token::PR);
+}
+
+std::unique_ptr<AST::BaseExpr> parseVarArrayOrFncall()
+{
+    std::string identName = curVal;
+    assert(!identName.empty());
+
+    match(Token::Id); // consume ident
+    switch(curTok)
+    {
+        case static_cast<int>(Token::EOL): // ident
+            return std::make_unique<AST::IdExpr>(identName);
+        case static_cast<int>(Token::SL): // ident[name]
+        {
+            strict_match(Token::SL);
+            auto baseExpr = parseExpr();
+            strict_match(Token::SR);
+            return std::make_unique<AST::ArrayExpr>(identName, std::move(baseExpr));
+        }
+        case static_cast<int>(Token::PL): // ident(name)
+        {
+            std::vector<std::unique_ptr<AST::BaseExpr>> fnArgs;
+            parseFnArgs(fnArgs);
+            return std::make_unique<AST::FnCallExpr>(identName, fnArgs);
+        }
+        default:
+            throw Exception("only expected either ident or ident[name] or ident(call)");
+    }
+}
+
 std::unique_ptr<AST::BaseExpr> parseExpr() 
 {
+    switch(curTok)
+    {
+        case static_cast<int>(Token::Literal_true):
+            strict_match(Token::Literal_true);
+            return std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>(true));
+        case static_cast<int>(Token::Literal_false):
+            strict_match(Token::Literal_false);
+            return std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>(false));
+        case static_cast<int>(Token::Number):
+        {
+            strict_match(Token::Number);
+            assert(!curVal.empty());
+            auto result = std::make_unique<AST::IntValue>(std::atoi(curVal.c_str()));
+            return std::make_unique<AST::BaseExpr>(std::move(result));
+        }
+        case static_cast<int>(Token::PL): // (expr ? expr : expr), (expr binop expr), (unaryop expr)
+        {
+            strict_match(Token::PL);
+            auto primaryExpr = parseExpr();
+            assert(primaryExpr);
+
+            if (match(Token::Op_question))  // (expr ? expr : expr)
+            {
+                auto trueE = parseExpr();
+                strict_match(Token::Op_colon);
+                auto falseE = parseExpr();
+                strict_match(Token::PR);
+                return std::make_unique<AST::TernaryExpr>(std::move(primaryExpr), 
+                                                          std::move(trueE), 
+                                                          std::move(falseE));
+            } 
+            else if (isUnaryOp()) // (unaryop expr)
+            {
+                strict_match(static_cast<Token>(curTok));
+
+                auto expr = parseExpr();
+                assert(expr);
+
+                strict_match(Token::PR);
+            }
+            else if (isBinOp()) // (expr binop expr)
+            {   
+                strict_match(static_cast<Token>(curTok)); // consume whatever binop we got
+
+                auto rhsExpr = parseExpr();
+                assert(rhsExpr);
+
+                strict_match(Token::PR);
+                return std::make_unique<AST::BinopExpr>(std::move(primaryExpr), 
+                                                        std::move(rhsExpr));
+            }
+            
+            throw Exception("expected either ternary, binop, or unaryop expresssion");
+        }
+        case static_cast<int>(Token::Sizeof):
+        {
+            strict_match(Token::Sizeof);
+            strict_match(Token::PL);
+            if (curVal.empty())
+                throw Exception("expected identifier name to sizeof operator");
+            auto expr = std::make_unique<AST::SizeofExpr>(curVal);
+            strict_match(Token::Id);
+            strict_match(Token::PR);
+
+            return expr;
+        }
+        case static_cast<int>(Token::Input):
+        {
+            strict_match(Token::Input);
+            strict_match(Token::PL);
+            strict_match(Token::PR);
+            return std::make_unique<AST::InputExpr>();
+        }
+        case static_cast<int>(Token::Id): // ident, ident[name], ident(args)
+        {
+            return parseVarArrayOrFncall();
+        }
+    }
     return nullptr;
 }
 
@@ -218,9 +387,12 @@ std::unique_ptr<AST::BaseStmt> parseArrayDecls()
         std::string varName = curVal;
         match(Token::Id); // consume 'id'
 
+        strict_match(Token::SL);
         auto arrayExpr = parseExpr();
         // parseExpr should throw exception if it isn't able to parse
         assert(arrayExpr != nullptr);
+
+        strict_match(Token::SR);
 
         arrayDeclStmt->decls.push_back({varName, std::move(arrayExpr)});
 
@@ -245,24 +417,38 @@ std::unique_ptr<AST::BaseStmt> parseStmt()
     {
         case static_cast<int>(Token::CL):
             return parseStmtBlock();
-            break;
         case static_cast<int>(Token::Type_int):
         case static_cast<int>(Token::Type_bool):
         case static_cast<int>(Token::Type_void):
             return parseVarDecls();
-            break;
         case static_cast<int>(Token::Type_array):
             return parseArrayDecls();
-            break;
         case static_cast<int>(Token::Print):
-            
+            break;
+        case static_cast<int>(Token::If):
+            break;
+        case static_cast<int>(Token::While):
+            break;
+        case static_cast<int>(Token::For):
+            break;
+        case static_cast<int>(Token::Id):
+            {
+                // two cases
+            }
+            break;
+        case static_cast<int>(Token::Op_divide):
+            // FIXME: how to add case for expression here
+            break;  
+        case static_cast<int>(Token::Return):
+            break;
         case static_cast<int>(Token::EOL):
             strict_match(Token::EOL);
             return nullptr;
-            break;
         default:
             throw Exception("unsupported syntax");
     }
+
+    return nullptr;
 }
 
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock()

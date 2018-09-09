@@ -20,6 +20,8 @@ class Exception : public std::runtime_error
 
 enum class Token
 {
+    Err             = 0,
+
     Number          = 1,
     Id              = 2,
 
@@ -42,30 +44,31 @@ enum class Token
     Op_and          = 16,
     Op_or           = 17,
     Op_eq           = 18,
-    Op_eqeq         = 19,
-    Op_gt           = 20,
-    Op_gte          = 21,
-    Op_lt           = 22,
-    Op_lte          = 23,
-    Op_colon        = 24,
-    Op_question     = 25,
-    Op_bang         = 26,
-    Comma           = 27,
+    Op_neq          = 19,
+    Op_eqeq         = 20,
+    Op_gt           = 21,
+    Op_gte          = 22,
+    Op_lt           = 23,
+    Op_lte          = 24,
+    Op_colon        = 25,
+    Op_question     = 26,
+    Op_bang         = 27,
+    Comma           = 28,
 
-    PL              = 28, // paren left - (
-    PR              = 29, // paren right - )
-    CL              = 30, // curly left - {
-    CR              = 31, // curly right - }
-    SL              = 32, // square left - [
-    SR              = 33, // square right - ]
+    PL              = 29, // paren left - (
+    PR              = 30, // paren right - )
+    CL              = 31, // curly left - {
+    CR              = 32, // curly right - }
+    SL              = 33, // square left - [
+    SR              = 34, // square right - ]
 
-    Print           = 34,
-    Input           = 35,
-    If              = 36,
-    While           = 37,
-    For             = 38,
-    Return          = 39,
-    Sizeof          = 40
+    Print           = 35,
+    Input           = 36,
+    If              = 37,
+    While           = 38,
+    For             = 39,
+    Return          = 40,
+    Sizeof          = 41,
 };
 
 extern std::string strval;
