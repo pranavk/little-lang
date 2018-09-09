@@ -7,7 +7,9 @@ int main(array a, bool b, int c) {
 void fun(array b, int c)
 {
 	int b
+	; these are the things
 	b = 3111
+	void c
 	array c[32], b[231], b[121]
 	c[4] = 323
 	c[9] = false
@@ -22,6 +24,11 @@ void fun(array b, int c)
 		a = (- a)
 	}
 
+	int k
+	k = input()
+	k = sizeof(k)
+	k = ( (k < 3) ? i : b)
+	k = true
 	int i
 	i = 0
 	for (d : c) {

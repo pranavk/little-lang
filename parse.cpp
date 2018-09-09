@@ -591,7 +591,6 @@ std::unique_ptr<AST::BaseStmt> parseFnBody()
 
 void parseProgram2()
 {
-
     std::cout << "Number of function we have: " << fnDefinitions.size() << std::endl;
     for (int i = 0; i < fnDefinitions.size(); i++) {
         fnDefinitions[i]->print();
