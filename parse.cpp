@@ -28,7 +28,6 @@ void skipEOLs()
     while (curTok == static_cast<int>(Token::EOL) && getNextTok());
 }
 
-// TODO: Have another match() that accepts Token::
 bool match(int tok)
 {
     // are we trying to match EOL?
@@ -43,6 +42,11 @@ bool match(int tok)
 	    match = true;
     }
     return match;
+}
+
+bool match(Token tok) 
+{
+    return match(static_cast<int>(tok));
 }
 
 bool isTokenType(int tok)
@@ -163,7 +167,7 @@ void skipToFnBody() {
 
 void parseStmt() 
 {
-
+    
 }
 
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock()
