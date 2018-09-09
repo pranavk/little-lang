@@ -34,10 +34,10 @@ namespace AST {
     };
 
     class FunctionDefinition {
+        public:
         std::unique_ptr<FunctionPrototype> proto;
         std::unique_ptr<BaseStmt> body;
 
-        public:
         FunctionDefinition(std::unique_ptr<FunctionPrototype> proto, 
                            std::unique_ptr<BaseStmt> body)
             : proto(std::move(proto)), body(std::move(body)) { }

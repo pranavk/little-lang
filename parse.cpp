@@ -135,9 +135,14 @@ bool skipFnBody()
 
 void parseProgram1() 
 {
+    int mainFns = 0;
     getNextTok();
     while (auto fnDef = parseFnDef())
     {
+        if (fnDef->proto->fnName == "main")
+            mainFns++;
+        
+        // TODO: check if another function we are pushing is different
         fnDefinitions.push_back(std::move(fnDef));
         if (!skipFnBody())
             throw Exception("couldn't skip function body during 1st parse.");
@@ -146,17 +151,19 @@ void parseProgram1()
         if (curTok == EOF)
             break;
     } 
+
+    if (mainFns != 1)
+        throw Exception("Program should have one function named 'main'");
 }
 
 void parseProgram2()
 {
-    
-
     std::cout << "Number of function we have: " << fnDefinitions.size() << std::endl;
     for (int i = 0; i < fnDefinitions.size(); i++) {
         fnDefinitions[i]->print();
     }
 
+    std::cout << "Pass 2: " << std::endl;
     getNextTok();
 }
 

@@ -6,3 +6,8 @@ void fun(array b, int c)
 {
 
 }
+
+void main(){
+
+	
+ }
