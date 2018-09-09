@@ -1,4 +1,6 @@
-int main(array a, bool b, int c) {
+
+
+int main(array a, bool b, int c) sd {
 
 }
 
@@ -6,8 +8,3 @@ void fun(array b, int c)
 {
 
 }
-
-void main(){
-
-	
- }

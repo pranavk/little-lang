@@ -28,6 +28,7 @@ void skipEOLs()
     while (curTok == static_cast<int>(Token::EOL) && getNextTok());
 }
 
+// TODO: Have another match() that accepts Token::
 bool match(int tok)
 {
     // are we trying to match EOL?
@@ -132,11 +133,11 @@ bool skipFnBody()
     return res;
 }
 
-
 void parseProgram1() 
 {
+    getNextTok(); // get first token of program
+    skipEOLs(); // discard any EOLs
     int mainFns = 0;
-    getNextTok();
     while (auto fnDef = parseFnDef())
     {
         if (fnDef->proto->fnName == "main")
@@ -150,14 +151,42 @@ void parseProgram1()
 
         if (curTok == EOF)
             break;
-    } 
+    }
 
     if (mainFns != 1)
         throw Exception("Program should have one function named 'main'");
 }
 
+void skipToFnBody() {
+    while (curTok != static_cast<int>(Token::CL) && getNextTok());
+}
+
+void parseStmt() 
+{
+
+}
+
+std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock()
+{
+    match(static_cast<int>(Token::CL));
+    while (curTok != static_cast<int>(Token::CR)) 
+    {
+        parseStmt();
+    }
+
+    match(static_cast<int>(Token::CR));
+
+    return nullptr;
+}
+
+std::unique_ptr<AST::BaseStmt> parseFnBody()
+{
+    return parseStmtBlock();
+}
+
 void parseProgram2()
 {
+
     std::cout << "Number of function we have: " << fnDefinitions.size() << std::endl;
     for (int i = 0; i < fnDefinitions.size(); i++) {
         fnDefinitions[i]->print();
@@ -165,6 +194,18 @@ void parseProgram2()
 
     std::cout << "Pass 2: " << std::endl;
     getNextTok();
+    for (int i = 0; i < fnDefinitions.size(); i++) {
+        skipEOLs();
+        bool res = false;
+        if (match(static_cast<int>(fnDefinitions[i]->proto->fnType)) &&
+            curTok == static_cast<int>(Token::Id) &&
+            curVal == fnDefinitions[i]->proto->fnName) 
+            {
+                skipToFnBody();
+                auto stmt = parseFnBody();
+                fnDefinitions[i]->body = std::move(stmt);
+            }
+    }
 }
 
 int main(int argc, char* argv[]) {

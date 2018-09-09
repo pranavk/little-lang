@@ -78,6 +78,31 @@ namespace AST {
         virtual ~BaseExpr() = default;
     };
 
+    // stmt -> { stmt* }
+    class StmtBlockStmt : public BaseStmt {
+        std::vector<BaseStmt> stmt_list;
+    };
+
+    class VarDecl {
+        public:
+        Token type;
+        std::string name;
+    };
+
+    class ArrayDecl {
+        public:
+        std::string name;
+        int size;
+    };
+
+    class VarDeclStmt : public BaseStmt {
+        std::vector<VarDecl> decls;
+    };
+
+    class ArrayDeclStmt : public BaseStmt {
+        std::vector<ArrayDecl> decls;
+    };
+
     // expr -> [number]
     class NumExpr : public BaseExpr {
         public:
@@ -91,14 +116,6 @@ namespace AST {
         virtual ~IdExpr() = default;
     };
 
-    // expr -> fun(bool a, int b)
-    class FnCallExpr : public BaseExpr {
-        std::string name; // fn name
-        std::vector<FnArg> fnArgs;
-        public:
-        virtual ~FnCallExpr() = default;
-    };
-
     // expr -> arr[expr]
     class ArrayExpr : public BaseExpr {
         std::string name;
@@ -106,4 +123,12 @@ namespace AST {
         public:
         virtual ~ArrayExpr() = default;
     };
+
+    // expr -> fun(bool a, int b)
+    class FnCallExpr : public BaseExpr {
+        std::string name; // fn name
+        std::vector<FnArg> fnArgs;
+        public:
+        virtual ~FnCallExpr() = default;
+    };  
 }
