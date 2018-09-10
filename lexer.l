@@ -17,56 +17,56 @@ NUMBER [-]?{DIGIT}+
 
 %%
 
-"("                        { printf("("); return static_cast<int>(Token::PL); }
-")"                        { printf(")"); return static_cast<int>(Token::PR); }
-"["                        { printf("["); return static_cast<int>(Token::SL); }
-"]"                        { printf("]"); return static_cast<int>(Token::SR); }
-"{"                        { printf("{"); return static_cast<int>(Token::CL); }
-"}"                        { printf("}"); return static_cast<int>(Token::CR); }
-"+"                        { printf("+"); return static_cast<int>(Token::Op_add); }
-"-"                        { printf("-"); return static_cast<int>(Token::Op_minus); }
-"*"                        { printf("*"); return static_cast<int>(Token::Op_mult); }
-"^"                        { printf("^"); return static_cast<int>(Token::Op_exp); }
-"/"                        { printf("/"); return static_cast<int>(Token::Op_divide); }
-"%"                        { printf("%"); return static_cast<int>(Token::Op_mod); }
-"&"                        { printf("&"); return static_cast<int>(Token::Op_and); }
-"|"                        { printf("|"); return static_cast<int>(Token::Op_or); }
-"="                        { printf("="); return static_cast<int>(Token::Op_eq); }
-"=="                       { printf("=="); return static_cast<int>(Token::Op_eqeq); }
-">"                        { printf(">"); return static_cast<int>(Token::Op_gt); }
-">="                       { printf(">="); return static_cast<int>(Token::Op_gte); }
-"<"                        { printf("<"); return static_cast<int>(Token::Op_lt); }
-"<="                       { printf("<="); return static_cast<int>(Token::Op_lte); }
-":"                        { printf(":"); return static_cast<int>(Token::Op_colon); }
-"?"                        { printf("?"); return static_cast<int>(Token::Op_question); }
-"!"                        { printf("!"); return static_cast<int>(Token::Op_bang); }
-","                        { printf(","); return static_cast<int>(Token::Comma); }
-\".*\"                     { printf("(slit:%s)", yytext); return static_cast<int>(Token::Literal_string); }
+"("                        { return static_cast<int>(Token::PL); }
+")"                        { return static_cast<int>(Token::PR); }
+"["                        { return static_cast<int>(Token::SL); }
+"]"                        { return static_cast<int>(Token::SR); }
+"{"                        { return static_cast<int>(Token::CL); }
+"}"                        { return static_cast<int>(Token::CR); }
+"+"                        { return static_cast<int>(Token::Op_add); }
+"-"                        { return static_cast<int>(Token::Op_minus); }
+"*"                        { return static_cast<int>(Token::Op_mult); }
+"^"                        { return static_cast<int>(Token::Op_exp); }
+"/"                        { return static_cast<int>(Token::Op_divide); }
+"%"                        { return static_cast<int>(Token::Op_mod); }
+"&"                        { return static_cast<int>(Token::Op_and); }
+"|"                        { return static_cast<int>(Token::Op_or); }
+"="                        { return static_cast<int>(Token::Op_eq); }
+"=="                       { return static_cast<int>(Token::Op_eqeq); }
+">"                        { return static_cast<int>(Token::Op_gt); }
+">="                       { return static_cast<int>(Token::Op_gte); }
+"<"                        { return static_cast<int>(Token::Op_lt); }
+"<="                       { return static_cast<int>(Token::Op_lte); }
+":"                        { return static_cast<int>(Token::Op_colon); }
+"?"                        { return static_cast<int>(Token::Op_question); }
+"!"                        { return static_cast<int>(Token::Op_bang); }
+","                        { return static_cast<int>(Token::Comma); }
+\".*\"                     { return static_cast<int>(Token::Literal_string); }
 
-"bool"                     { printf("bool"); strval = "bool"; return static_cast<int>(Token::Type_bool); }
-"int"                      { printf("int"); strval = "int"; return static_cast<int>(Token::Type_int); }
-"array"                    { printf("array"); strval = "array"; return static_cast<int>(Token::Type_array); }
-"void"                     { printf("void"); strval = "void"; return static_cast<int>(Token::Type_void); }
+"bool"                     { return static_cast<int>(Token::Type_bool); }
+"int"                      { return static_cast<int>(Token::Type_int); }
+"array"                    { return static_cast<int>(Token::Type_array); }
+"void"                     { return static_cast<int>(Token::Type_void); }
 
-"true"                     { printf("true"); return static_cast<int>(Token::Literal_true); }
-"false"                    { printf("false"); return static_cast<int>(Token::Literal_false); }
-"sizeof"                   { printf("sizeof"); return static_cast<int>(Token::Sizeof); }
-"input"                    { printf("input;"); return static_cast<int>(Token::Input); }
-"print"                    { printf("print"); return static_cast<int>(Token::Print); }
-"if"                       { printf("if"); return static_cast<int>(Token::If); }
-"else"                     { printf("else"); return static_cast<int>(Token::Else); }
-"while"                    { printf("while"); return static_cast<int>(Token::While); }
-"for"                      { printf("for"); return static_cast<int>(Token::For); }
-"return"                   { printf("return"); return static_cast<int>(Token::Return); }
+"true"                     { return static_cast<int>(Token::Literal_true); }
+"false"                    { return static_cast<int>(Token::Literal_false); }
+"sizeof"                   { return static_cast<int>(Token::Sizeof); }
+"input"                    { return static_cast<int>(Token::Input); }
+"print"                    { return static_cast<int>(Token::Print); }
+"if"                       { return static_cast<int>(Token::If); }
+"else"                     { return static_cast<int>(Token::Else); }
+"while"                    { return static_cast<int>(Token::While); }
+"for"                      { return static_cast<int>(Token::For); }
+"return"                   { return static_cast<int>(Token::Return); }
 
-\n                         { printf("<EOL>\n"); return static_cast<int>(Token::EOL); }
-[\t\r ]+                   { printf("%s", yytext); }
+\n                         { return static_cast<int>(Token::EOL); }
+[\t\r ]+                   { }
 
-;.*                        { printf("<Comment:\"%s\">", yytext); }
-{NUMBER}                   { printf("(%s:NUMBER)", yytext); strval = std::string(yytext); return static_cast<int>(Token::Number); }
-{ID}                       { printf("(%s:ID)", yytext); strval = std::string(yytext); return static_cast<int>(Token::Id); }
+;.*                        { }
+{NUMBER}                   { return static_cast<int>(Token::Number); }
+{ID}                       { return static_cast<int>(Token::Id); }
 <<EOF>>                    { return -1; }
 
-.                          { printf("(%s:ERR)", yytext); }
+.                          { }
 
 %%

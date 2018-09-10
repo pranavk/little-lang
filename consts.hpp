@@ -75,5 +75,8 @@ enum class Token
 
 extern std::string strval;
 
+extern int yylineno;
+extern char* yytext;
+
 int yylex();
 void yyrestart(FILE* fp);

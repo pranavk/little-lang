@@ -6,8 +6,17 @@
 #include "consts.hpp"
 #include "baseast.hpp"
 
+struct Token_t {
+    int lineno;
+    std::string token;
+    Token type;
+};
+
 // contains all functions 
 static std::vector<std::unique_ptr<AST::FunctionDefinition>> fnDefinitions;
+
+// contains all the tokens
+static std::vector<Token_t> tokens;
 
 // check lexer.l to see how strval is used
 std::string strval;
@@ -623,11 +632,18 @@ int main(int argc, char* argv[]) {
     filename = std::string(argv[1]);
     std::cout << "Parsing file: " << filename << std::endl;
 
-    // first pass
+    // get all the tokens in the buffer
     FILE* fp = nullptr;
     if (!filename.empty())
         fp = fopen(filename.c_str(), "r");
     yyrestart(fp);
+
+    int token = -1;
+    while ((token = yylex()) != -1) {
+        tokens.push_back({yylineno, std::string(yytext), static_cast<Token>(token)});
+    }
+
+    fclose(fp);
 
     try {
         parseProgram1();
@@ -648,7 +664,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    fclose(fp);
    
     return 0;
 }
