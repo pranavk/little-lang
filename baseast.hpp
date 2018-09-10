@@ -44,7 +44,7 @@ namespace AST {
     
         void print()
         {
-            std::cout  << std::endl << "--------" << std::endl;
+            std::cout  << std::endl << "-------------------" << std::endl;
             std::cout << "FnName: " << proto->fnName << std::endl;
             std::cout << "FnType: " << static_cast<int>(proto->fnType) << std::endl;
             std::cout << "Args :" << std::endl;
@@ -222,11 +222,14 @@ namespace AST {
 
     class BinopExpr : public BaseExpr {
         std::unique_ptr<BaseExpr> leftExpr;
+        Token op;
         std::unique_ptr<BaseExpr> rightExpr;
         public:
         BinopExpr(std::unique_ptr<BaseExpr> leftExpr,
+                  Token op,
                   std::unique_ptr<BaseExpr> rightExpr) 
                   : leftExpr(std::move(leftExpr))
+                  , op(op)
                   , rightExpr(std::move(rightExpr)) { }
     };
 
@@ -242,9 +245,10 @@ namespace AST {
     };
 
     class SizeofExpr : public BaseExpr {
-        std::string name;
+        std::unique_ptr<AST::BaseExpr> idExpr;
         public:
-        SizeofExpr(std::string name) : name(name) { }
+        SizeofExpr(std::unique_ptr<BaseExpr>& idExpr) 
+            : idExpr(std::move(idExpr)) { }
     };
 
     class InputExpr : public BaseExpr {

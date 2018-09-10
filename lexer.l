@@ -65,7 +65,7 @@ NUMBER [-]?{DIGIT}+
 ;.*                        { }
 {NUMBER}                   { return static_cast<int>(Token::Number); }
 {ID}                       { return static_cast<int>(Token::Id); }
-<<EOF>>                    { return -1; }
+<<EOF>>                    { return static_cast<int>(Token::End); }
 
 .                          { }
 

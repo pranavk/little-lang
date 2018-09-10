@@ -9,4 +9,4 @@ parser: lex.yy.c parser.cpp
 
 .PHONY:
 parser-test: parser sample.lil lil.lil
-	./parser sample.lil && ./parser lil.lil
+	./parser lil.lil

@@ -20,7 +20,7 @@ class Exception : public std::runtime_error
 
 enum class Token
 {
-    Err             = 0,
+    End             = 0,
 
     Number          = 1,
     Id              = 2,
@@ -70,7 +70,7 @@ enum class Token
     While           = 40,
     For             = 41,
     Return          = 42,
-    Sizeof          = 43,
+    Sizeof          = 43
 };
 
 extern std::string strval;
