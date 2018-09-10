@@ -1,30 +1,25 @@
 void fun()
 {
-        print(54, 23)
-        int k = input()
-	if (k * k) {
-	   print("start\sdf sdf")
-	}
-	else {
-	    print("sth else")
-	}
+	int k
+	k = input()
 }
 
 int main() {
     ; this is variable declaration
      array tmparray[100]
-	  int i =  0, k = 34
+	  int i ,k
+	  i = 0
+	  k = 32
      for (ele : tmparray) {
-	 i = i + 1
-	 ele = i * i
+	 i = (i + 1)
+	 ele = (i * i)
      }
 
-     while (i > 0 ) {
-	 tmparray[i] = i + i
-	 i = i -1
+     while ((i > 0 )) {
+	 tmparray[i] = (i + i)
+	 i = (i - 1)
       }
 
-     fun()
 
 	 return test
 }
