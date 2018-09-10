@@ -548,9 +548,51 @@ std::unique_ptr<AST::BaseStmt> parseArrayAssignment(int tokIdx)
     return nullptr;
 }
 
-std::unique_ptr<AST::BaseExpr> parsePrintStmt(int tokIdx)
+bool parsePrintArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& printArgs)
+{
+    bool ret = false;
+    if (match(Token::PL))
+    {
+        bool first = true;
+        ret = true;
+        while (!match(Token::PR))
+        {
+            if (!first && !match(Token::Comma))
+                return false;
+
+            std::unique_ptr<AST::BaseExpr> res = nullptr;
+            if (curTok == static_cast<int>(Token::Literal_string))
+            {
+                std::string val = curVal;
+                match(curTok); // consume string literal
+                res.reset(new AST::StringLiteralExpr(curVal));
+            }
+            else if (res = parseExpr(curTokIdx))
+            {
+                // yay!
+            }
+
+            first = false;
+            if (!res)
+                return false;
+            printArgs.push_back(std::move(res));      
+        }
+    }
+
+    return ret;
+}
+
+std::unique_ptr<AST::BaseStmt> parsePrintStmt(int tokIdx)
 {
     updateTokenIdx(tokIdx);
+
+    if (match(Token::Print)) {
+        std::vector<std::unique_ptr<AST::BaseExpr>> args;
+        if (parsePrintArgs(args)) {
+            return std::make_unique<AST::PrintStmt>(args);
+        }
+    }
+
     return nullptr;
 }
 

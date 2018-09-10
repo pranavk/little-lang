@@ -126,6 +126,14 @@ namespace AST {
 
     class PrintStmt : public BaseStmt {
         std::vector<std::unique_ptr<BaseExpr>> args;
+        public:
+        PrintStmt(std::vector<std::unique_ptr<BaseExpr>>& vec)
+            { 
+                args.clear();
+                for (int i = 0; i < vec.size(); i++) {
+                    args.push_back(std::move(vec[i]));
+                }
+            }
     };
 
     class IdExpr;
@@ -206,7 +214,13 @@ namespace AST {
     
     };
 
- 
+    class StringLiteralExpr : public BaseExpr {
+        public:
+        std::string val;
+        StringLiteralExpr(std::string& name) 
+            : val(name) { }
+    };
+
     class TernaryExpr : public BaseExpr {
         std::unique_ptr<BaseExpr> condExpr;
         std::unique_ptr<BaseExpr> trueExpr;

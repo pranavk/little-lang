@@ -13,3 +13,6 @@ test-sample: parser sample.lil
 
 test-lil: parser lil.lil
 	./parser lil.lil
+
+test-man: parser man.lil
+	./parser man.lil
