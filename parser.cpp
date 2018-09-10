@@ -40,12 +40,6 @@ void updateTokenIdx(int tokIdx) {
     getNextTok();
 }
 
-// this puts the current token back in the input stream
-bool putCurTok()
-{
-
-}
-
 void skipEOLs()
 {
     while (curTok == static_cast<int>(Token::EOL) && getNextTok());
@@ -120,7 +114,8 @@ bool strict_match(Token tok)
 {
     bool res = false;
     if (!(res = match(tok)))
-        throw Exception("Expected " + std::to_string(static_cast<int>(tok)) +
+        throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno) +
+                        "\tExpected " + std::to_string(static_cast<int>(tok)) +
                          ", found " + std::to_string(curTok));
     return res;
 }
@@ -184,7 +179,7 @@ std::unique_ptr<AST::FunctionDefinition> parseFnDef()
     std::string fnName;
     int fnType;
     if (isTokenType(fnType = curTok) && 
-        (getNextTok() == static_cast<int>(Token::Id)) && !((fnName = curVal).empty()) &&
+       (getNextTok() == static_cast<int>(Token::Id)) && !((fnName = curVal).empty()) &&
         getNextTok() && parseFnParams(params))
     {
         std::unique_ptr<AST::FunctionPrototype> proto(
@@ -216,7 +211,6 @@ bool skipFnBody()
 
 void parseProgram1() 
 {
-    getNextTok(); // get first token of program
     skipEOLs(); // discard any EOLs
     int mainFns = 0;
     while (auto fnDef = parseFnDef())
@@ -408,12 +402,9 @@ std::unique_ptr<AST::BaseExpr> parseFncallExpr(int tokIdx) {
 
     if (match(Token::Id)) {
         std::string name = curVal;
-        if (match(Token::PL)) {
-            std::vector<std::unique_ptr<AST::BaseExpr>> fnArgs;
-            parseFnArgs(tokIdx, fnArgs);
-            if (match(Token::PR) && match(Token::EOL))
-                return std::make_unique<AST::FnCallExpr>(name, fnArgs);
-        }
+        std::vector<std::unique_ptr<AST::BaseExpr>> fnArgs;
+        if (curTok == static_cast<int>(Token::PL) && parseFnArgs(curTokIdx, fnArgs))
+            return std::make_unique<AST::FnCallExpr>(name, fnArgs);
     }
 
     return nullptr;
@@ -469,17 +460,17 @@ std::unique_ptr<AST::BaseExpr> parseExpr(int tokIdx)
         return res;
     } else if (res = parseNumberExpr(tokIdx)) {
         return res;
-    } else if (res = parseIdentExpr(tokIdx)) {
-        return res;
     } else if (res = parseTernaryExpr(tokIdx)) {
         return res;
     } else if (res = parseSizeofExpr(tokIdx)) {
         return res;
     } else if (res = parseInputExpr(tokIdx)) {
         return res;
-    } else if (res = parseArrayExpr(tokIdx)) {
+    } else if (res = parseArrayExpr(tokIdx)) { // ident[expr]
         return res;
-    } else if (res = parseFncallExpr(tokIdx)) {
+    } else if (res = parseFncallExpr(tokIdx)) { // ident(expr)
+        return res;
+    } else if (res = parseIdentExpr(tokIdx)) { // ident
         return res;
     } else if (res = parseBinopExpr(tokIdx)) {
         return res;
@@ -662,7 +653,8 @@ std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
     } else if (res = parseReturnStmt(tokIdx)) {
         return res;
     } else {
-        throw Exception("unsupported syntax " + std::to_string(tokens[curTokIdx].lineno)  + " " + tokens[curTokIdx].token);
+        throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno)  +
+                        " token: " + tokens[curTokIdx].token);
     }
 }
 
@@ -674,12 +666,13 @@ std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock(int tokIdx)
     if (match(Token::CL) && match(Token::EOL))
     {
         blockStmt.reset(new AST::StmtBlockStmt);
+        skipEOLs();
         while (curTok != static_cast<int>(Token::CR))
         {
-            skipEOLs();
             auto stmt = parseStmt(curTokIdx);
             if (stmt)
                 blockStmt->stmt_list.push_back(std::move(stmt));
+            skipEOLs();
         }
     }
 
@@ -739,6 +732,8 @@ int main(int argc, char* argv[]) {
 
     fclose(fp);
 
+    // update the token pointer to first
+    updateTokenIdx(0);
     try {
         parseProgram1();
     } catch(Exception& exc) {
@@ -756,6 +751,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    std::cout << "Program parsed successfully" << std::endl;
    
     return 0;
 }

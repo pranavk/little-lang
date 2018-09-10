@@ -1,7 +1,8 @@
-void fun()
+void fun(int a, int b,)
 {
 	int k
 	k = input()
+	k
 }
 
 int main() {
@@ -10,6 +11,7 @@ int main() {
 	  int i ,k
 	  i = 0
 	  k = 55
+	  
      for (ele : tmparray) {
 	 i = (i + 1)
 	 ele = (i * i)
@@ -19,7 +21,6 @@ int main() {
 	 tmparray[i] = (i + i)
 	 i = (i - 1)
       }
-
 
 	 return test
 }

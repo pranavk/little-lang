@@ -1,0 +1,13 @@
+int main(int x, int y) {
+    sort(z)
+
+  array z[4]
+  int i
+  i = 0
+  while ((i < 4)) {
+    z[i] = (10 - i)
+  }
+  for (i : z) {
+  ;  print(i)
+  }
+}
