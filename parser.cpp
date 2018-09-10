@@ -24,6 +24,12 @@ int getNextTok()
     return curTok;
 }
 
+// this puts the current token back in the input stream
+bool putCurTok()
+{
+
+}
+
 void skipEOLs()
 {
     while (curTok == static_cast<int>(Token::EOL) && getNextTok());
@@ -417,14 +423,12 @@ std::unique_ptr<AST::BaseStmt> parseArrayDecls()
     return arrayDeclStmt;
 }
 
-std::unique_ptr<AST::BaseStmt> parseAssignment()
+std::unique_ptr<AST::BaseStmt> parseAssignment(const std::string& ident)
 {
-    if (curVal.empty())
+    if (ident.empty())
         throw Exception("valid identifier expected; got nothing");
     
-    std::string identName = curVal;
-    strict_match(Token::Id);
-
+    std::string identName = ident;
     switch(curTok) 
     {
         case static_cast<int>(Token::SL):
@@ -550,7 +554,14 @@ std::unique_ptr<AST::BaseStmt> parseStmt()
             // two cases:
             // ident = expr
             // ident[expr] = expr
-            return parseAssignment();
+   
+            std::string ident = curVal;
+            strict_match(Token::Id);
+
+            if (curTok == static_cast<int>(Token::Op_eq) ||
+                curTok == static_cast<int>(Token::SL))
+                return parseAssignment(ident); 
+    }
         case static_cast<int>(Token::Op_divide):
             // FIXME: how to add case for expression here
             break;  
