@@ -1,12 +1,3 @@
-; there should be exactly one main function
-int unmain() {
-    print() ; print should have atleast one arg
-
-    array k[32]
-    bool a,b
-    a = (k[3] && k[4]) ; no && operator
-    b = (k[2] || k[3]) ; no || operator
-
-
-    return 5 + 3 ; invalid expression syntax
+int main() {
+    int a = 4
 }
