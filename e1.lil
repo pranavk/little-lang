@@ -1,7 +1,0 @@
-int main() {
-    int a
-    a = +45
-    b = b + a
-
-    return void
-}
