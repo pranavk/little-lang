@@ -1,0 +1,9 @@
+int main(int m) {
+    int a, b, ; trailing comma
+    a = +45 ;
+    b = b + a  ; should be parens around expression
+
+    a = "dummy string" ; string literals only allowed in print stmt
+
+    return void ; you can't return a type
+}

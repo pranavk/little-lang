@@ -1,0 +1,32 @@
+int factorial (int n) {
+    if ((n == 1))
+        return 1
+    
+    return (n * factorial((n - 1)))
+}
+
+void our_print(int sum) {
+    print("Sum is : ", sum)
+    return
+}
+
+int main() {
+    array arr[10]
+    int idx
+    ; initialize array
+    idx = 1
+    int array_var
+    for (array_var : arr) {
+        array_var = i
+        i = (i + 1)
+    }
+    int _var_array_sum_
+    _var_array_sum_ = 0
+    for (_var_array_ : arr) { ; this loop sums factorial of numbers inside the array
+        _var_array_sum_ = (_var_array_sum_ + factorial(_var_array_))
+    }
+
+    our_print(_var_array_sum_)
+
+    return _var_array_sum_ 
+}
