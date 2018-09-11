@@ -8,15 +8,6 @@ parser: lex.yy.c parser.cpp
 	g++ -g lex.yy.c parser.cpp -o parser
 
 .PHONY:
-test-sample: parser sample.lil
-	./parser sample.lil
-
-test-lil: parser lil.lil
-	./parser lil.lil
-
-test-man: parser man.lil
-	./parser man.lil
-
 test-correct: parser correct1.lil correct2.lil correct3.lil
 	./parser correct1.lil && ./parser correct2.lil && ./parser correct3.lil
 
