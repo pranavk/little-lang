@@ -579,6 +579,8 @@ bool parsePrintArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& printArgs)
         }
     }
 
+    // atleast one argument is required
+    ret = ret && printArgs.size() > 0;
     return ret;
 }
 
