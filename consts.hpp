@@ -44,7 +44,7 @@ enum class Token
     Op_mod          = 16,
     Op_and          = 17,
     Op_or           = 18,
-    Op_eq           = 19,
+    Op_assignment   = 19,
     Op_neq          = 20,
     Op_eqeq         = 21,
     Op_gt           = 22,

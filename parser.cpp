@@ -521,7 +521,7 @@ std::unique_ptr<AST::BaseStmt> parseVarAssignment(int tokIdx)
     updateTokenIdx(tokIdx);
     
     std::string identName = curVal;
-    if (match(Token::Id) && match(Token::Op_eq)) {
+    if (match(Token::Id) && match(Token::Op_assignment)) {
         auto rhsExpr = parseExpr(curTokIdx);
         if (rhsExpr && match(Token::EOL)) {
             return std::make_unique<AST::VarAssignment>(identName, rhsExpr);
@@ -537,7 +537,7 @@ std::unique_ptr<AST::BaseStmt> parseArrayAssignment(int tokIdx)
     std::string identName = curVal;
     if (match(Token::Id) && match(Token::SL)) {
         auto idxExpr = parseExpr(curTokIdx);
-        if (idxExpr && match(Token::SR) && match(Token::Op_eq)) {
+        if (idxExpr && match(Token::SR) && match(Token::Op_assignment)) {
             auto expr = parseExpr(curTokIdx);
             if (expr && match(Token::EOL)) {
                 return std::make_unique<AST::ArrayAssignment>(identName, idxExpr, expr);
