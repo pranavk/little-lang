@@ -1,8 +1,8 @@
-void fun(int a, int b,)
+void fun(int a, int b
 {
 	int k
 	k = input()
-	k
+	k[323]
 }
 
 int main() {

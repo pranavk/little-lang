@@ -17,7 +17,8 @@ int main(int a, array b)
         try_unprinting()
     }
 
-    int sz = sizeof(b)
+    int sz
+    sz = sizeof(b)
     if (((sz - 5) >= 0))
         b[(sz - 5)] = sz
 

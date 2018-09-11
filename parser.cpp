@@ -145,7 +145,8 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
     while (res && curTok != static_cast<int>(Token::PR)) 
     {
         // consume a "," if it's not the first iteration
-        if (!first) strict_match(Token::Comma);
+        if (!first && !match(Token::Comma))
+            return false;
 
         AST::FnParam param;
         res = false;
@@ -164,8 +165,6 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
             args.push_back(param);
             getNextTok();
         }
-        else
-            throw Exception("error parsing function arguments");
     }
 
     res = res && match(static_cast<int>(Token::PR));
@@ -187,7 +186,7 @@ std::unique_ptr<AST::FunctionDefinition> parseFnDef()
         return std::make_unique<AST::FunctionDefinition>(std::move(proto), nullptr);
     }
 
-    throw Exception("cannot parse function arguments");
+    throw Exception("cannot parse function arguments for function : " + fnName);
     return nullptr;
 }
 
@@ -478,6 +477,7 @@ std::unique_ptr<AST::BaseExpr> parseExpr(int tokIdx)
         return res;
     }
 
+    updateTokenIdx(tokIdx);
     return nullptr;
 }
 
@@ -596,6 +596,7 @@ std::unique_ptr<AST::BaseStmt> parsePrintStmt(int tokIdx)
     return nullptr;
 }
 
+std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx);
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock(int tokIdx);
 
 std::unique_ptr<AST::BaseStmt> parseIfStmt(int tokIdx)
@@ -605,10 +606,10 @@ std::unique_ptr<AST::BaseStmt> parseIfStmt(int tokIdx)
     if (match(Token::If) && match(Token::PL)) {
         auto condExpr = parseExpr(curTokIdx);
         if (match(Token::PR)) {
-            auto body = parseStmtBlock(curTokIdx);
-            std::unique_ptr<AST::StmtBlockStmt> elseStmt = nullptr;
+            auto body = parseStmt(curTokIdx);
+            std::unique_ptr<AST::BaseStmt> elseStmt = nullptr;
             if (match(Token::Else)) {
-                elseStmt = parseStmtBlock(curTokIdx);
+                elseStmt = parseStmt(curTokIdx);
             }
             if (body)
                 return std::make_unique<AST::IfStmt>(condExpr, body, elseStmt);     
@@ -643,7 +644,7 @@ std::unique_ptr<AST::BaseStmt> parseForStmt(int tokIdx)
         if (idExpr && match(Token::Op_colon)) {
             auto containerExpr = parseExpr(curTokIdx);
             if (containerExpr && match(Token::PR)) {
-                auto body = parseStmtBlock(curTokIdx);
+                auto body = parseStmt(curTokIdx);
                 if (body) {
                     return std::make_unique<AST::ForStmt>(idExpr, containerExpr, body);
                 }
@@ -659,7 +660,7 @@ std::unique_ptr<AST::BaseStmt> parseReturnStmt(int tokIdx)
 
     if (match(Token::Return)) {
         auto expr = parseExpr(curTokIdx);
-        if (expr && match(Token::EOL))
+        if (match(Token::EOL))
             return std::make_unique<AST::ReturnStmt>(expr);
     }
 

@@ -140,12 +140,12 @@ namespace AST {
 
     class IfStmt : public BaseStmt {
         std::unique_ptr<BaseExpr> cond;
-        std::unique_ptr<StmtBlockStmt> trueStmt;
-        std::unique_ptr<StmtBlockStmt> falseStmt;
+        std::unique_ptr<BaseStmt> trueStmt;
+        std::unique_ptr<BaseStmt> falseStmt;
         public:
         IfStmt(std::unique_ptr<BaseExpr>& cond,
-               std::unique_ptr<StmtBlockStmt>& trueStmt,
-               std::unique_ptr<StmtBlockStmt>& falseStmt)
+               std::unique_ptr<BaseStmt>& trueStmt,
+               std::unique_ptr<BaseStmt>& falseStmt)
                : cond(std::move(cond))
                , trueStmt(std::move(trueStmt))
                , falseStmt(std::move(falseStmt)) { }
@@ -164,11 +164,11 @@ namespace AST {
     class ForStmt : public BaseStmt {
         std::unique_ptr<BaseExpr> ident;
         std::unique_ptr<BaseExpr> container;
-        std::unique_ptr<StmtBlockStmt> body;
+        std::unique_ptr<BaseStmt> body;
         public:
         ForStmt(std::unique_ptr<BaseExpr>& ident,
                 std::unique_ptr<BaseExpr>& container,
-                std::unique_ptr<StmtBlockStmt>& body)
+                std::unique_ptr<BaseStmt>& body)
                 : ident(std::move(ident))
                 , container(std::move(container))
                 , body(std::move(body)) { }
