@@ -1,38 +1,37 @@
 int main(array a, bool b, int c) {
 	int a, b,c
-	c = false
+	c := false
 	d[32]
 	return 
 }
 
-void fun(array b, int c)
-{
+void fun(array b, int c) {
 	int b, i
 	; dummy comment
-	b = 3111
+	b := 3111
 	void c
     c
 
 	array c[32]  , b[231]
-	c[4] = 323
-	c[9] = false
+	c[4] := 323
+	c[9] := false
 
 	if ((b < 323)) {
-		c[(- (- b))] = (- b)
+		c[(- (- b))] := (- b)
 	} 
 
 	while ((a < 10)) {
-		a = (a - 1)
-		a = (- a)
+		a := (a - 1)
+		a := (- a)
 	}
 
     int k, d
-	k = ( (k < 3) ? i : b)
+	k := ( (k < 3) ? i : b)
 	for (d : c) {
-		d = (i * i)
-		i = (i + 1)
+		d := (i * i)
+		i := (i + 1)
 	}
 
-	val = false
+	val := false
     return 
 }

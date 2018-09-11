@@ -46,11 +46,7 @@ void skipEOLs()
 }
 
 bool match(int tok)
-{
-    // are we trying to match EOL?
-    if (tok != static_cast<int>(Token::EOL))
-        skipEOLs();
-    
+{  
     bool match = false;
     if (tok == curTok)
     {
@@ -256,7 +252,7 @@ std::unique_ptr<AST::BaseStmt> parseVarDecls(int tokIdx)
                 match(Token::Comma);
         }
 
-        if (match(Token::EOL) && varDeclStmt->decls.size() >= 1)
+        if (varDeclStmt->decls.size() >= 1)
             return varDeclStmt;
     }
 
@@ -508,7 +504,7 @@ std::unique_ptr<AST::BaseStmt> parseArrayDecls(int tokIdx)
             }
         }
 
-        if (match(Token::EOL) && arrayDeclStmt->decls.size() >= 1) {
+        if (arrayDeclStmt->decls.size() >= 1) {
             return arrayDeclStmt;
         }
     }
@@ -523,7 +519,7 @@ std::unique_ptr<AST::BaseStmt> parseVarAssignment(int tokIdx)
     std::string identName = curVal;
     if (match(Token::Id) && match(Token::Op_assignment)) {
         auto rhsExpr = parseExpr(curTokIdx);
-        if (rhsExpr && match(Token::EOL)) {
+        if (rhsExpr) {
             return std::make_unique<AST::VarAssignment>(identName, rhsExpr);
         }
     }
@@ -539,7 +535,7 @@ std::unique_ptr<AST::BaseStmt> parseArrayAssignment(int tokIdx)
         auto idxExpr = parseExpr(curTokIdx);
         if (idxExpr && match(Token::SR) && match(Token::Op_assignment)) {
             auto expr = parseExpr(curTokIdx);
-            if (expr && match(Token::EOL)) {
+            if (expr) {
                 return std::make_unique<AST::ArrayAssignment>(identName, idxExpr, expr);
             }
         }
@@ -662,8 +658,7 @@ std::unique_ptr<AST::BaseStmt> parseReturnStmt(int tokIdx)
 
     if (match(Token::Return)) {
         auto expr = parseExpr(curTokIdx);
-        if (match(Token::EOL))
-            return std::make_unique<AST::ReturnStmt>(expr);
+        return std::make_unique<AST::ReturnStmt>(expr);
     }
 
     return nullptr;
@@ -676,31 +671,59 @@ std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseStmt> res = nullptr;
     if (res = parseStmtBlock(tokIdx)) {
-        return res;
-    } else if (res = parseVarDecls(tokIdx)) {
-        return res;
-    } else if (res = parseArrayDecls(tokIdx)) {
-        return res;
-    } else if (res = parsePrintStmt(tokIdx)) {
-        return res;
-    } else if (res = parseIfStmt(tokIdx)) {
-        return res;
-    } else if (res = parseWhileStmt(tokIdx)) {
-        return res;
-    } else if (res = parseForStmt(tokIdx)) {
-        return res;
-    } else if (res = parseVarAssignment(tokIdx)) {
-        return res;
-    } else if (res = parseArrayAssignment(tokIdx)) {
-        return res;
-    } else if (res = parseExpr(tokIdx)) {
-        return res;
-    } else if (res = parseReturnStmt(tokIdx)) {
-        return res;
-    } else {
-        throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno)  +
-                        " token: " + tokens[curTokIdx].token);
+        if (match(Token::EOL))
+            return res;
     }
+    if (res = parseVarDecls(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parseArrayDecls(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parsePrintStmt(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parseIfStmt(tokIdx))
+    {
+        return res;
+    }
+    if (res = parseWhileStmt(tokIdx))
+    {
+        return res;
+    }
+    if (res = parseForStmt(tokIdx))
+    {
+        return res;
+    }
+    if (res = parseVarAssignment(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parseArrayAssignment(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parseExpr(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+    if (res = parseReturnStmt(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
+   
+    throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno) +
+                    " token: " + tokens[curTokIdx].token);
 }
 
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock(int tokIdx)
