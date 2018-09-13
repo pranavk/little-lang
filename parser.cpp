@@ -770,7 +770,10 @@ void parseProgram2()
             {
                 skipToFnBody();
                 auto stmt = parseFnBody();
-                fnDefinitions[i]->body = std::move(stmt);
+                if (match(Token::EOL))
+                    fnDefinitions[i]->body = std::move(stmt);
+                else
+                    throw Exception("New line required after fn body.");
             }
     }
 }
