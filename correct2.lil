@@ -3,21 +3,23 @@ void try_printing(int b) {
     return ; i don't return anything
 }
 
-void try_unprinting() { } ; what's that
+void try_unprinting() {
+} ; what's that
 
 int main(int a, array b) {
     if ((a < 9)) {
-      b := (a * a)
+      b[0] := (a * a)
     }
 
-    while ((b > 0)) {
+    while ((b[1] > 0)) {
         try_printing(b)
-        b := (b - 1)
+        b[2] := (b[2] - 1)
         try_unprinting()
     }
 
     int sz
     sz := sizeof(b)
+    try_printing(sz);
     if (((sz - 5) >= 0)) {
        b[(sz - 5)] := sz
     }
