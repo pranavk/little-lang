@@ -2,7 +2,7 @@
 
 Just do:
 
-`make parser`
+`make`
 
 and then you can use sample files as input to the parser as:
 
