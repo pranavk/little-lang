@@ -1,13 +1,15 @@
-void try_printing(int b) { 
-    ; i don't know how to print 
+void try_printing(int b) {
+    ; i don't know how to print
     return ; i don't return anything
 }
 
 void try_unprinting() { } ; what's that
 
 int main(int a, array b) {
-    if ((a < 9)) b := (a * a)
-    
+    if ((a < 9)) {
+      b := (a * a)
+    }
+
     while ((b > 0)) {
         try_printing(b)
         b := (b - 1)
@@ -16,10 +18,14 @@ int main(int a, array b) {
 
     int sz
     sz := sizeof(b)
-    if (((sz - 5) >= 0)) b[(sz - 5)] := sz
+    if (((sz - 5) >= 0)) {
+       b[(sz - 5)] := sz
+    }
 
     int k
-    for (k : b) k := (- sz)
+    for (k : b) {
+	k := (- sz)
+    }
 
     return 3
 }

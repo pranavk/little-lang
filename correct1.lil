@@ -1,11 +1,16 @@
 int factorial (int n) {
-    if ((n == 1)) return 1
-    
+    if ((n == 1)) {
+	return
+    }
+
     return (n * factorial((n - 1)))
 }
 
 void our_print(int sum) {
-    print("Sum is : ", sum)
+    print("Sum is : ", \
+	  sum)
+    print("Bye \
+           bye\n")
     return
 }
 
@@ -27,5 +32,5 @@ int main() {
 
     our_print(_var_array_sum_)
 
-    return _var_array_sum_ 
+    return _var_array_sum_
 }
