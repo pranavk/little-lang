@@ -30,6 +30,7 @@ NUMBER [-]?{DIGIT}+
                            }
 <STRING>.                  { str += *yytext; }
 
+\\\n                       { }
 
 "("                        { return static_cast<int>(Token::PL); }
 ")"                        { return static_cast<int>(Token::PR); }
