@@ -42,7 +42,7 @@ NUMBER [-]?{DIGIT}+
 "?"                        { return static_cast<int>(Token::Op_question); }
 "!"                        { return static_cast<int>(Token::Op_bang); }
 ","                        { return static_cast<int>(Token::Comma); }
-\".*\"                     { return static_cast<int>(Token::Literal_string); }
+\"(\\.|[^\\"])*\"          { return static_cast<int>(Token::Literal_string); }
 
 "bool"                     { return static_cast<int>(Token::Type_bool); }
 "int"                      { return static_cast<int>(Token::Type_int); }
