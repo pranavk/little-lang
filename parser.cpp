@@ -604,10 +604,10 @@ std::unique_ptr<AST::BaseStmt> parseIfStmt(int tokIdx)
     if (match(Token::If) && match(Token::PL)) {
         auto condExpr = parseExpr(curTokIdx);
         if (match(Token::PR)) {
-            auto body = parseStmt(curTokIdx);
-            std::unique_ptr<AST::BaseStmt> elseStmt = nullptr;
+            auto body = parseStmtBlock(curTokIdx);
+            std::unique_ptr<AST::StmtBlockStmt> elseStmt = nullptr;
             if (match(Token::Else)) {
-                elseStmt = parseStmt(curTokIdx);
+                elseStmt = parseStmtBlock(curTokIdx);
             }
             if (body)
                 return std::make_unique<AST::IfStmt>(condExpr, body, elseStmt);     
@@ -642,7 +642,7 @@ std::unique_ptr<AST::BaseStmt> parseForStmt(int tokIdx)
         if (idExpr && match(Token::Op_colon)) {
             auto containerExpr = parseExpr(curTokIdx);
             if (containerExpr && match(Token::PR)) {
-                auto body = parseStmt(curTokIdx);
+                auto body = parseStmtBlock(curTokIdx);
                 if (body) {
                     return std::make_unique<AST::ForStmt>(idExpr, containerExpr, body);
                 }
@@ -671,8 +671,7 @@ std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseStmt> res = nullptr;
     if (res = parseStmtBlock(tokIdx)) {
-        if (match(Token::EOL))
-            return res;
+        return res;
     }
     if (res = parseVarDecls(tokIdx))
     {
