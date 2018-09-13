@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <iostream>
 #include "consts.hpp"
-
-std::string str;
 %}
 
 DIGIT [0-9]
@@ -17,21 +15,9 @@ NUMBER [-]?{DIGIT}+
 /* behaves as if yywrap() returns 1 if following is defined. */
 %option noyywrap
 
-%x STRING
-
 %%
 
-\"                         { BEGIN(STRING); str.clear();}
-<STRING>\\\n               {}
-<STRING>\"                 { 
-                             BEGIN(INITIAL);
-                             yytext = strdup(str.c_str()); /* freeing in parser.cpp */
-                             return static_cast<int>(Token::Literal_string);
-                           }
-<STRING>.                  { str += *yytext; }
-
 \\\n                       { }
-
 "("                        { return static_cast<int>(Token::PL); }
 ")"                        { return static_cast<int>(Token::PR); }
 "["                        { return static_cast<int>(Token::SL); }
@@ -56,6 +42,7 @@ NUMBER [-]?{DIGIT}+
 "?"                        { return static_cast<int>(Token::Op_question); }
 "!"                        { return static_cast<int>(Token::Op_bang); }
 ","                        { return static_cast<int>(Token::Comma); }
+\".*\"                     { return static_cast<int>(Token::Literal_string); }
 
 "bool"                     { return static_cast<int>(Token::Type_bool); }
 "int"                      { return static_cast<int>(Token::Type_int); }

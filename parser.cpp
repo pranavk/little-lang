@@ -796,11 +796,6 @@ int main(int argc, char* argv[]) {
 
     int token = -1;
     while ((token = yylex()) != 0) {
-        std::string strval;
-        if (static_cast<Token>(token) == Token::Literal_string) {
-            strval = std::string(yytext);
-            free(yytext); // free the mem we allocated during string parsing in .l
-        }
         tokens.push_back({yylineno, std::string(yytext), static_cast<Token>(token)});
     }
 
