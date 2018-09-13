@@ -1,3 +1,7 @@
 ; there should be exactly one main function
-int main() {}
-int main(int a) {}
+int main() {
+    int a
+}
+int main(int a) {
+
+}
