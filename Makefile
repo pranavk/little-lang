@@ -12,13 +12,14 @@ clean:
 
 GOOD_FILES:= $(wildcard ../passing-tests/*.lil)
 BAD_FILES:= $(wildcard ../failing-tests/*.lil)
+RED=\033[0;31m
+NC=\033[0m
 
-test-correct: parser
+check: parser
 	for file in ${GOOD_FILES}; do \
-		./parser $${file}; \
-	done
+		./parser $${file} 2> /dev/null || (echo -e "${RED}ERR: OK expected${NC} for $${file}, got NOK") \
+	done || true;
 
-test-error: parser
 	for file in ${BAD_FILES}; do \
-		./parser $${file} && (echo "ERROR: Fail expected but it passed."); \
-	done
+		./parser $${file} 2> /dev/null && (echo -e "${RED}ERR: NOK expected${NC} for $${file}, got OK"); \
+	done || true

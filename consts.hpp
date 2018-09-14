@@ -14,7 +14,7 @@ class Exception : public std::runtime_error
         Exception(std::string msg) :
             std::runtime_error(msg), type(ExceptionType::Parser) { };
         void print() {
-            std::cout << "parser error: " << std::string(what()) << std::endl;
+            std::cerr << "parser error: " << std::string(what()) << std::endl;
         }
 };
 

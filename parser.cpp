@@ -30,8 +30,6 @@ int getNextTok()
 	Token_t curTokObj = tokens[++curTokIdx];
     curTok = static_cast<int>(curTokObj.type);
 	curVal = curTokObj.token;
-//	std::cout << "nexttok: " << curTok << "(" << curVal << ")" << std::endl;
-
     return curTok;
 }
 
@@ -755,12 +753,6 @@ std::unique_ptr<AST::BaseStmt> parseFnBody()
 
 void parseProgram2()
 {
-    std::cout << "Number of function we have: " << fnDefinitions.size() << std::endl;
-    for (int i = 0; i < fnDefinitions.size(); i++) {
-        fnDefinitions[i]->print();
-    }
-    std::cout << "----------------" << std::endl << std::endl << std::endl;
-    std::cout << "Pass 2: " << std::endl;
     for (int i = 0; i < fnDefinitions.size(); i++) {
         skipEOLs();
         bool res = false;
@@ -786,7 +778,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     filename = std::string(argv[1]);
-    std::cout << "Parsing file: " << filename << std::endl;
+    std::cout << "Parsing file: " << filename << " ... ";
 
     // get all the tokens in the buffer
     FILE* fp = nullptr;
@@ -808,6 +800,7 @@ int main(int argc, char* argv[]) {
     try {
         parseProgram1();
     } catch(Exception& exc) {
+        std::cout << "NOK" << std::endl;
         std::cerr << curTok << " " << curVal << std::endl;
         exc.print();
         return 1;
@@ -817,12 +810,13 @@ int main(int argc, char* argv[]) {
     try {
         parseProgram2();
     } catch(Exception& exc) {
+        std::cout << "NOK" << std::endl;
         std::cerr << curTok << " " << curVal << std::endl;
         exc.print();
         return 1;
     }
 
-    std::cout << "Program parsed successfully" << std::endl;
+    std::cout << "OK" << std::endl;
    
     return 0;
 }
