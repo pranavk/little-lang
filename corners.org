@@ -1,9 +1,0 @@
-+ "asdf " sd "sdf " - shouldn't take whole thing as a string
-
-+ what's this \\ handling in c lex about?
-
-+ parse : void fun(, ) { sdf sd; }
-
-+ push some EOLs in the start of program
-
-+ try to assign a string to variable - should be an error
