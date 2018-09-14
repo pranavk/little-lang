@@ -9,8 +9,6 @@ int factorial (int n) {
 void our_print(int sum) {
     print("Sum is : ", \
 	  sum)
-    print("Bye \
-           bye\n")
     return
 }
 
