@@ -33,6 +33,7 @@ NUMBER [-]?{DIGIT}+
 "&"                        { return static_cast<int>(Token::Op_and); }
 "|"                        { return static_cast<int>(Token::Op_or); }
 ":="                       { return static_cast<int>(Token::Op_assignment); }
+"!="                       { return static_cast<int>(Token::Op_neq); }
 "=="                       { return static_cast<int>(Token::Op_eqeq); }
 ">"                        { return static_cast<int>(Token::Op_gt); }
 ">="                       { return static_cast<int>(Token::Op_gte); }
