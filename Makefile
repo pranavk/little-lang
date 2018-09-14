@@ -1,5 +1,5 @@
 parser: lex.yy.c parser.cpp
-	g++ -g lex.yy.c parser.cpp -o parser
+	g++ -std=c++14 -g lex.yy.c parser.cpp -o parser
 
 lexer: lex.yy.c
 	gcc lex.yy.c -lfl -o lexer
