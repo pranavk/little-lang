@@ -17,10 +17,12 @@ RED=\033[0;31m
 NC=\033[0m
 
 check: parser
-	for file in ${GOOD_FILES}; do \
+	@echo -e "Testing passing-tests (Expected outcome: OK)\n";
+	@for file in ${GOOD_FILES}; do \
 		./parser $${file} 2> /dev/null || (echo -e "${RED}ERR: OK expected${NC} for $${file}, got NOK") \
 	done || true;
-
-	for file in ${BAD_FILES}; do \
+	
+	@echo -e "Testing failing-tests (Expected outcome: NOK)\n";
+	@for file in ${BAD_FILES}; do \
 		./parser $${file} 2> /dev/null && (echo -e "${RED}ERR: NOK expected${NC} for $${file}, got OK"); \
 	done || true
