@@ -4,11 +4,15 @@ Just do:
 
 `make`
 
-and then you can use sample files as input to the parser as:
+Files that should be parsed by this compiler are in passing-tests/ and files that should not be parsed are in failing-tests/ directory.
 
-`./parser correct1.lil`
+You can do
 
-The correct[0-9].lil files will be parsed successfully by the parser while err[0-9].lil are supposed to cause a parser error.
+`./parser filenametoparse`
 
-Refer to this page for specifications:
+to run the parser on any file and check its result.
+
+There is a `make check` rule too that will parse all the files in ../passing-tests/ and ../failing-tests/ directory. So make sure that these directories exist.
+
+Refer to this page for language specifications:
 https://github.com/regehr/tiny-language

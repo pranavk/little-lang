@@ -12,6 +12,7 @@ clean:
 
 GOOD_FILES:= $(wildcard ../passing-tests/*.lil)
 BAD_FILES:= $(wildcard ../failing-tests/*.lil)
+
 RED=\033[0;31m
 NC=\033[0m
 
