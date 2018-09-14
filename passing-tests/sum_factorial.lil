@@ -8,15 +8,15 @@ int factorial (int n) {
 
 void our_print(int sum) {
     print("Sum is : ", \
-	  sum)
+	  sum);
     return
 }
 
 int main() {
     array arr[10]
-    int idx
+    int i
     ; initialize array
-    idx := 1
+    i := 1
     int array_var
     for (array_var : arr) {
         array_var := i

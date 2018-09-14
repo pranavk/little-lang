@@ -1,3 +1,0 @@
-int main() {
-	print("first", "second") ; do you parse till here?"    
-}

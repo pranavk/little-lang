@@ -1,0 +1,35 @@
+int main() {
+	int n, i
+	print("Enter number of elements in array")
+	n := input()
+	i := 0
+	array arr[n]
+	print("Now enter all elements",\
+		" of the array.") ;;";; 
+	while (( i < n)) {
+		arr[i] := input()
+		i := (i + 1)
+	}
+
+	return (_is_array_palindrome_(arr) == true)
+}
+
+bool _is_array_palindrome_(array arr) {
+	int i, sz, j
+	sz := sizeof(arr)
+	j := (sz / 2)
+	i := (((i % 2) == 0) ? (j - 1) : j)
+	bool res
+	res := true
+	while (((res & \
+		(i >= 0)) & \
+		(i < sizeof(arr)))) {
+		if ((arr[i] != arr[j])) {
+			res := false
+		}
+		i := (i  - 1)
+		j := (j + 1)
+	}
+
+	return res;
+}
