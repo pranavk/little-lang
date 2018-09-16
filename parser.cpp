@@ -9,17 +9,14 @@
 #include "baseast.hpp"
 #include "visitor.hpp"
 
-struct Token_t {
+struct TokenInfo {
     int lineno;
     std::string token;
     Token type;
 };
 
-// contains all functions 
-static std::vector<std::unique_ptr<AST::FunctionDefinition>> fnDefinitions;
-
 // contains all the tokens
-static std::vector<Token_t> tokens;
+static std::vector<TokenInfo> tokens;
 
 // check lexer.l to see how strval is used
 std::string strval;
@@ -35,7 +32,7 @@ bool isOn(const std::string& opt) {
 
 int getNextTok()
 {
-	Token_t curTokObj = tokens[++curTokIdx];
+	TokenInfo curTokObj = tokens[++curTokIdx];
     curTok = static_cast<int>(curTokObj.type);
 	curVal = curTokObj.token;
     return curTok;
@@ -137,104 +134,6 @@ bool isTokenType(int tok)
     }
 
     return result;
-}
-
-bool parseFnParams(std::vector<AST::FnParam>& args)
-{
-    // consume left parenthesis first
-    bool res = match(static_cast<int>(Token::PL));
-    bool first = true;
-    while (res && curTok != static_cast<int>(Token::PR)) 
-    {
-        // consume a "," if it's not the first iteration
-        if (!first && !match(Token::Comma))
-            return false;
-
-        AST::FnParam param;
-        res = false;
-        if (isTokenType(curTok))
-        {
-            param.type = static_cast<Token>(curTok);
-            if (getNextTok() == static_cast<int>(Token::Id))
-            {
-                param.name = strval;
-                res = true;
-            }
-        }
-
-        first = false;
-        if (res) {
-            args.push_back(param);
-            getNextTok();
-        }
-    }
-
-    res = res && match(static_cast<int>(Token::PR));
-
-    return res;
-}
-
-std::unique_ptr<AST::FunctionDefinition> parseFnDef() 
-{
-    std::vector<AST::FnParam> params;
-    std::string fnName;
-    int fnType;
-    if (isTokenType(fnType = curTok) && 
-       (getNextTok() == static_cast<int>(Token::Id)) && !((fnName = curVal).empty()) &&
-        getNextTok() && parseFnParams(params))
-    {
-        std::unique_ptr<AST::FunctionPrototype> proto(
-            new AST::FunctionPrototype(fnType, fnName, params));
-        return std::make_unique<AST::FunctionDefinition>(std::move(proto), nullptr);
-    }
-
-    throw Exception("cannot parse function arguments for function : " + fnName);
-    return nullptr;
-}
-
-bool skipFnBody()
-{
-    bool res = match(static_cast<int>(Token::CL));
-    int parenDepth = 0;
-    if (res)
-        parenDepth = 1;
-
-    while (res && parenDepth > 0) {
-        if (curTok == static_cast<int>(Token::CL))
-            parenDepth++;
-        else if (curTok == static_cast<int>(Token::CR))
-            parenDepth--;
-        getNextTok();
-    }
-
-    return res;
-}
-
-void parseProgram1() 
-{
-    skipEOLs(); // discard any EOLs
-    int mainFns = 0;
-    while (auto fnDef = parseFnDef())
-    {
-        if (fnDef->proto->fnName == "main")
-            mainFns++;
-        
-        // TODO: check if another function we are pushing is different
-        fnDefinitions.push_back(std::move(fnDef));
-        if (!skipFnBody())
-            throw Exception("couldn't skip function body during 1st parse.");
-        skipEOLs();
-
-        if (match(Token::End))
-            break;
-    }
-
-    if (mainFns != 1)
-        throw Exception("Program should have one function named 'main'");
-}
-
-void skipToFnBody() {
-    while (curTok != static_cast<int>(Token::CL) && getNextTok());
 }
 
 std::unique_ptr<AST::BaseStmt> parseVarDecls(int tokIdx)
@@ -760,23 +659,76 @@ std::unique_ptr<AST::BaseStmt> parseFnBody()
     return parseStmtBlock(curTokIdx);
 }
 
-void parseProgram2()
+bool parseFnParams(std::vector<AST::FnParam>& args)
 {
-    for (int i = 0; i < fnDefinitions.size(); i++) {
-        skipEOLs();
-        bool res = false;
-        if (match(static_cast<int>(fnDefinitions[i]->proto->fnType)) &&
-            curTok == static_cast<int>(Token::Id) &&
-            curVal == fnDefinitions[i]->proto->fnName) 
+    // consume left parenthesis first
+    bool res = match(static_cast<int>(Token::PL));
+    bool first = true;
+    while (res && curTok != static_cast<int>(Token::PR)) 
+    {
+        // consume a "," if it's not the first iteration
+        if (!first && !match(Token::Comma))
+            return false;
+
+        AST::FnParam param;
+        res = false;
+        if (isTokenType(curTok))
+        {
+            param.type = static_cast<Token>(curTok);
+            if (getNextTok() == static_cast<int>(Token::Id))
             {
-                skipToFnBody();
-                auto stmt = parseFnBody();
-                if (!stmt)
-                    throw Exception("Cannot parse function body.");
-                if (!match(Token::EOL))
-                    throw Exception("New line required after fn body.");
-                fnDefinitions[i]->body = std::move(stmt);
+                param.name = strval;
+                res = true;
             }
+        }
+
+        first = false;
+        if (res) {
+            args.push_back(param);
+            getNextTok();
+        }
+    }
+
+    res = res && match(static_cast<int>(Token::PR));
+
+    return res;
+}
+
+std::unique_ptr<AST::FunctionDefinition> parseFnDef() 
+{
+    std::vector<AST::FnParam> params;
+    std::string fnName;
+    int fnType;
+    if (!isTokenType(fnType = curTok) || !match(curTok))
+        throw Exception("Unexpected type found.");
+    
+    fnName = curVal;
+    if (!match(Token::Id))
+        throw Exception("Bad function name");
+
+    if (!parseFnParams(params))
+        throw Exception("Cannot parse function arguments.");
+
+    std::unique_ptr<AST::FunctionPrototype> proto(
+        new AST::FunctionPrototype(fnType, fnName, params));
+    auto stmt = parseFnBody();
+    if (!stmt)
+        throw Exception("Couldn't parse function body.");
+
+    return std::make_unique<AST::FunctionDefinition>(std::move(proto), std::move(stmt));
+}
+
+void parseProgram(AST::Program& program) 
+{
+    skipEOLs();
+    while (auto fnDef = parseFnDef())
+    {
+        program.fnDefinitions.push_back(std::move(fnDef));
+        if (!match(Token::EOL))
+            throw Exception("New line required after fn body.");
+        skipEOLs();
+        if (match(Token::End))
+            break;
     }
 }
 
@@ -814,28 +766,17 @@ int main(int argc, char* argv[]) {
     while ((token = yylex()) != 0) {
         tokens.push_back({yylineno, std::string(yytext), static_cast<Token>(token)});
     }
-
     tokens.push_back({yylineno, "EOF", Token::End});
 
     fclose(fp);
 
-    // update the token pointer to first
+    AST::Program programNode;
     updateTokenIdx(0);
     try {
-        parseProgram1();
-    } catch(Exception& exc) {
-        std::cout << "NOK" << std::endl;
-        std::cerr << curTok << " " << curVal << std::endl;
-        exc.print();
-        return 1;
-    }
-
-    updateTokenIdx(0);
-    try {
-        parseProgram2();
+        parseProgram(programNode);
         if (isOn("print-ast")) {
             Visitor::PrintASTVisitor printVisitor;
-            printVisitor.visitProgramAST(fnDefinitions);
+            printVisitor.visit(&programNode);
         }
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;

@@ -48,6 +48,11 @@ namespace AST {
         void print();
     };
 
+    class Program {
+        public:
+        std::vector<std::unique_ptr<AST::FunctionDefinition>> fnDefinitions;
+    };
+
     class BaseValue {
         public:
         virtual ~BaseValue() = default;

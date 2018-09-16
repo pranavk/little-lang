@@ -1,5 +1,0 @@
-int main(int a, int b, array cc) {
-	int a1, a2
-	array b1[((a1 < 4) ? 4 : 12)], b2[43]
-	print(a, "string 2", a2)
-}

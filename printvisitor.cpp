@@ -273,9 +273,9 @@ void Visitor::PrintASTVisitor::visit(AST::FnCallExpr *expr)
     }
 }
 
-void Visitor::PrintASTVisitor::visitProgramAST(std::vector<std::unique_ptr<AST::FunctionDefinition>> &fnDefs)
+void Visitor::PrintASTVisitor::visit(AST::Program* program)
 {
-    for (auto &fnDef : fnDefs)
+    for (auto &fnDef : program->fnDefinitions)
     {
         fnDef->print();
         fnDef->body->accept(this);

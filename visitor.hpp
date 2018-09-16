@@ -4,7 +4,7 @@
 
 namespace AST {
     class FunctionDefinition;
-
+    class Program;
 
     class BaseStmt;
     class BaseExpr;
@@ -60,7 +60,7 @@ namespace Visitor {
         virtual void visit(AST::ArrayExpr*) = 0;
         virtual void visit(AST::FnCallExpr*) = 0;
 
-        virtual void visitProgramAST(std::vector<std::unique_ptr<AST::FunctionDefinition>>& fnDefs) = 0;
+        virtual void visit(AST::Program*) = 0;
     };
 
     class PrintASTVisitor : public BaseVisitor {
@@ -94,6 +94,42 @@ namespace Visitor {
         virtual void visit(AST::ArrayExpr*) override;
         virtual void visit(AST::FnCallExpr*) override;
 
-        void visitProgramAST(std::vector<std::unique_ptr<AST::FunctionDefinition>>& fnDefs);
+        virtual void visit(AST::Program*) override;
+    };
+
+    class SymbolTable {
+
+    };
+
+    class TypecheckerVisitor : public BaseVisitor {
+        SymbolTable symTab;
+
+        public:
+        virtual void visit(AST::BaseStmt* stmt) { std::cout << "Typechecker visitor " << std::endl; };
+        virtual void visit(AST::StmtBlockStmt* stmtBlock) = 0;
+        virtual void visit(AST::VarDeclStmt*) = 0;
+        virtual void visit(AST::ArrayDeclStmt*) = 0;
+        virtual void visit(AST::PrintStmt* stmt) = 0;
+        virtual void visit(AST::IfStmt*) = 0;
+        virtual void visit(AST::WhileStmt*) = 0;
+        virtual void visit(AST::ForStmt*) = 0;
+        virtual void visit(AST::ReturnStmt*) = 0;
+        virtual void visit(AST::ArrayAssignment*) = 0;
+        virtual void visit(AST::VarAssignment*) = 0;
+
+        virtual void visit(AST::BaseExpr*) = 0;
+        virtual void visit(AST::NumExpr*) = 0;
+        virtual void visit(AST::IdExpr*) = 0;
+        virtual void visit(AST::LiteralExpr*) = 0;
+        virtual void visit(AST::StringLiteralExpr*) = 0;
+        virtual void visit(AST::TernaryExpr*) = 0;
+        virtual void visit(AST::BinopExpr*) = 0;
+        virtual void visit(AST::UnaryExpr*) = 0;
+        virtual void visit(AST::SizeofExpr*) = 0;
+        virtual void visit(AST::InputExpr*) = 0;
+        virtual void visit(AST::ArrayExpr*) = 0;
+        virtual void visit(AST::FnCallExpr*) = 0;
+
+        virtual void visit(AST::Program*) override;
     };
 }
