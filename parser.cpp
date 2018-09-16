@@ -751,7 +751,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "error: provide file name as argument" << std::endl;
         return 1;
     }
-    std::cout << "Parsing file: " << filename << " ... ";
 
     // get all the tokens in the buffer
     FILE* fp = nullptr;
@@ -770,14 +769,13 @@ int main(int argc, char* argv[]) {
     AST::Program programNode;
     updateTokenIdx(0);
     try {
+        std::cout << "Parsing file: " << filename << " ... ";
         parseProgram(programNode);
         if (isOn("print-ast")) {
             Visitor::PrintASTVisitor printVisitor;
             printVisitor.visit(&programNode);
         }
-        std::cout << std::endl << "Typechecking ..." << std::endl;
-        Visitor::TypecheckerVisitor typecheckerVisitor;
-        typecheckerVisitor.visit(&programNode);
+        std::cout << "OK" << std::endl;
     } catch(Exception& exc) {
         std::cerr << curTok << " " << curVal << std::endl;
         std::cout << "NOK" << std::endl;
@@ -785,7 +783,16 @@ int main(int argc, char* argv[]) {
         return 1;   
     }
 
-    std::cout << "OK" << std::endl;
+    try {
+        std::cout << std::endl << "Typechecking ..." << std::endl;
+        Visitor::TypecheckerVisitor typecheckerVisitor;
+        typecheckerVisitor.visit(&programNode);
+        std::cout << "OK" << std::endl;
+    } catch(Exception& exc) {
+        std::cout << "NOK" << std::endl;
+        exc.print();
+        return 1;   
+    }
    
     return 0;
 }
