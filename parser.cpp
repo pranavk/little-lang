@@ -1,6 +1,8 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <cstring>
 #include <cassert>
 
 #include "consts.hpp"
@@ -25,6 +27,11 @@ std::string strval;
 int curTok = -1;
 int curTokIdx = -1;
 std::string curVal;
+
+static std::set<std::string> args;
+bool isOn(const std::string& opt) {
+    return args.find(opt) != args.end();
+}
 
 int getNextTok()
 {
@@ -775,11 +782,26 @@ void parseProgram2()
 
 int main(int argc, char* argv[]) {
     std::string filename;
-    if (argc <= 1) {
-        std::cerr << "error: provide file name as first argument" << std::endl;
+    for (int i = 1; i < argc; i++) {
+        std::string tmp = std::string(argv[i]);
+        if (tmp.length() > 2 && tmp[0] == '-' && tmp[1] == '-') {
+            args.insert(tmp.substr(2));
+        } else {
+            filename = tmp;
+        }
+    }
+
+    if (isOn("help")) {
+        std::cout << argv[0] << " OPTIONS FILENAME" << std::endl;
+        std::cout << "OPTIONS" << std::endl;
+        std::cout << "\t--print-ast\tPrints the AST of the parsed program" << std::endl;
+        std::cout << "\t--help\t\tPrints this help" << std::endl;
+        return 0;
+    }
+    if (filename.empty()) {
+        std::cerr << "error: provide file name as argument" << std::endl;
         return 1;
     }
-    filename = std::string(argv[1]);
     std::cout << "Parsing file: " << filename << " ... ";
 
     // get all the tokens in the buffer
@@ -811,13 +833,15 @@ int main(int argc, char* argv[]) {
     updateTokenIdx(0);
     try {
         parseProgram2();
-        Visitor::PrintASTVisitor printVisitor;
-        printVisitor.visitProgramAST(fnDefinitions);
+        if (isOn("print-ast")) {
+            Visitor::PrintASTVisitor printVisitor;
+            printVisitor.visitProgramAST(fnDefinitions);
+        }
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;
         std::cerr << curTok << " " << curVal << std::endl;
         exc.print();
-        return 1;
+        return 1;   
     }
 
     std::cout << "OK" << std::endl;
