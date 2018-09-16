@@ -18,9 +18,6 @@ struct TokenInfo {
 // contains all the tokens
 static std::vector<TokenInfo> tokens;
 
-// check lexer.l to see how strval is used
-std::string strval;
-
 int curTok = -1;
 int curTokIdx = -1;
 std::string curVal;
@@ -140,7 +137,7 @@ std::unique_ptr<AST::BaseStmt> parseVarDecls(int tokIdx)
 {
     updateTokenIdx(tokIdx);
 
-    if (isTokenType(curTok)) {
+    if (isTokenType(curTok) && curTok != static_cast<int>(Token::Type_array)) {
         Token varType = static_cast<Token>(curTok);
         std::unique_ptr<AST::VarDeclStmt> varDeclStmt(new AST::VarDeclStmt);
 
@@ -677,7 +674,7 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
             param.type = static_cast<Token>(curTok);
             if (getNextTok() == static_cast<int>(Token::Id))
             {
-                param.name = strval;
+                param.name = curVal;
                 res = true;
             }
         }

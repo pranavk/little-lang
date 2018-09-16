@@ -73,8 +73,6 @@ enum class Token
     Sizeof          = 43
 };
 
-extern std::string strval;
-
 extern int yylineno;
 extern char* yytext;
 
