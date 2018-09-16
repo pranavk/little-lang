@@ -1,5 +1,5 @@
-parser: lex.yy.c parser.cpp
-	g++ -std=c++14 -g lex.yy.c parser.cpp -o parser
+parser: lex.yy.c parser.cpp visitor.cpp baseast.cpp baseast.hpp visitor.hpp
+	g++ -std=c++14 -g lex.yy.c parser.cpp visitor.cpp baseast.cpp -o parser
 
 lexer: lex.yy.c
 	gcc lex.yy.c -lfl -o lexer

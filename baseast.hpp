@@ -6,11 +6,14 @@
 #include <memory>
 
 #include "consts.hpp"
+#include "visitor.hpp"
 
 namespace AST {
     class BaseStmt {
         public:
         virtual ~BaseStmt() = default;
+
+        virtual void accept(Visitor::BaseVisitor* v)  { };
     };
 
     class FnParam {
@@ -42,62 +45,61 @@ namespace AST {
                            std::unique_ptr<BaseStmt> body)
             : proto(std::move(proto)), body(std::move(body)) { }
     
-        void print()
-        {
-            std::cout  << std::endl << "-------------------" << std::endl;
-            std::cout << "FnName: " << proto->fnName << std::endl;
-            std::cout << "FnType: " << static_cast<int>(proto->fnType) << std::endl;
-            std::cout << "Args :" << std::endl;
-            for (auto arg: proto->fnParams) {
-                std::cout << arg.name << " " << static_cast<int>(arg.type);
-                std::cout << std::endl;
-            }
-        }
+        void print();
     };
 
     class BaseValue {
         public:
         virtual ~BaseValue() = default;
+        virtual std::string getVal() = 0;
     };
 
     class StringValue : public BaseValue {
         std::string value;
         public:
         StringValue(std::string& value) : value(value) { }
+        std::string getVal() override { return value; }
     };
 
     class BoolValue : public BaseValue {
         bool value;
         public:
         BoolValue(bool value) : value(value) { }
+        std::string getVal() override { return std::to_string(value); }
     };
 
     class IntValue : public BaseValue {
         int value;
         public:
         IntValue(int value) : value(value) { }
+        std::string getVal() override { return std::to_string(value); }
     };
 
     // various types of statements
     class BaseExpr : public BaseStmt {
-        std::unique_ptr<BaseValue> result;
         public:
+        std::unique_ptr<BaseValue> result;
         BaseExpr(std::unique_ptr<BaseValue> result)
             : result(std::move(result)) { }
         BaseExpr() {}
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     // expr -> [ID]
     class IdExpr : public BaseExpr {
-        std::string name;
         public:
+        std::string name;
         IdExpr(std::string& name) : name(name) { }
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     // stmt -> { stmt* }
     class StmtBlockStmt : public BaseStmt {
         public:
         std::vector<std::unique_ptr<AST::BaseStmt>> stmt_list;
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class VarDecl {
@@ -117,41 +119,44 @@ namespace AST {
     class VarDeclStmt : public BaseStmt {
         public:
         std::vector<VarDecl> decls;
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class ArrayDeclStmt : public BaseStmt {
         public:
         std::vector<ArrayDecl> decls;
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class PrintStmt : public BaseStmt {
-        std::vector<std::unique_ptr<BaseExpr>> args;
         public:
-        PrintStmt(std::vector<std::unique_ptr<BaseExpr>>& vec)
-            { 
-                args.clear();
-                for (int i = 0; i < vec.size(); i++) {
-                    args.push_back(std::move(vec[i]));
-                }
-            }
+        std::vector<std::unique_ptr<BaseExpr>> args;
+        PrintStmt(std::vector<std::unique_ptr<BaseExpr>>& vec);
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class IdExpr;
 
     class IfStmt : public BaseStmt {
+        public:
         std::unique_ptr<BaseExpr> cond;
         std::unique_ptr<StmtBlockStmt> trueStmt;
         std::unique_ptr<StmtBlockStmt> falseStmt;
-        public:
         IfStmt(std::unique_ptr<BaseExpr>& cond,
                std::unique_ptr<StmtBlockStmt>& trueStmt,
                std::unique_ptr<StmtBlockStmt>& falseStmt)
                : cond(std::move(cond))
                , trueStmt(std::move(trueStmt))
                , falseStmt(std::move(falseStmt)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class WhileStmt : public BaseStmt {
+        public:
         std::unique_ptr<BaseExpr> cond;
         std::unique_ptr<StmtBlockStmt> body;
         public:
@@ -159,9 +164,12 @@ namespace AST {
                   std::unique_ptr<StmtBlockStmt>& body)
                   : cond(std::move(cond))
                   , body(std::move(body)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class ForStmt : public BaseStmt {
+        public:
         std::unique_ptr<BaseExpr> ident;
         std::unique_ptr<BaseExpr> container;
         std::unique_ptr<StmtBlockStmt> body;
@@ -172,16 +180,22 @@ namespace AST {
                 : ident(std::move(ident))
                 , container(std::move(container))
                 , body(std::move(body)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class ReturnStmt : public BaseStmt {
+        public:
         std::unique_ptr<BaseExpr> returnExpr;
         public:
         ReturnStmt(std::unique_ptr<BaseExpr>& returnExpr)
                     : returnExpr(std::move(returnExpr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class ArrayAssignment : public BaseStmt {
+        public:
         // name[idxExpr] = expr
         std::string name;
         std::unique_ptr<BaseExpr> idxExpr;
@@ -193,9 +207,12 @@ namespace AST {
                         : name(name)
                         , idxExpr(std::move(idxExpr))
                         , expr(std::move(expr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); } 
     };
 
     class VarAssignment : public BaseStmt {
+        public:
         // name = expr
         std::string name;
         std::unique_ptr<BaseExpr> expr;
@@ -204,6 +221,8 @@ namespace AST {
                       std::unique_ptr<BaseExpr>& expr)
                       : name(name)
                       , expr(std::move(expr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     // expr -> [number]
@@ -219,80 +238,88 @@ namespace AST {
         std::string val;
         StringLiteralExpr(std::string& name) 
             : val(name) { }
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class TernaryExpr : public BaseExpr {
+        public:
         std::unique_ptr<BaseExpr> condExpr;
         std::unique_ptr<BaseExpr> trueExpr;
         std::unique_ptr<BaseExpr> falseExpr;
-        public:
         TernaryExpr(std::unique_ptr<BaseExpr> condExpr,
                     std::unique_ptr<BaseExpr> trueExpr,
                     std::unique_ptr<BaseExpr> falseExpr)
                     : condExpr(std::move(condExpr))
                     , trueExpr(std::move(trueExpr))
                     , falseExpr(std::move(falseExpr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class BinopExpr : public BaseExpr {
+        public:
         std::unique_ptr<BaseExpr> leftExpr;
         Token op;
         std::unique_ptr<BaseExpr> rightExpr;
-        public:
         BinopExpr(std::unique_ptr<BaseExpr> leftExpr,
                   Token op,
                   std::unique_ptr<BaseExpr> rightExpr) 
                   : leftExpr(std::move(leftExpr))
                   , op(op)
                   , rightExpr(std::move(rightExpr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class UnaryExpr : public BaseExpr {
+        public:
         Token type;
         std::unique_ptr<BaseExpr> expr;
         // (type expr)
-        public:
         UnaryExpr(Token type,
                   std::unique_ptr<BaseExpr>& expr)
                   : type(type)
                   , expr(std::move(expr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class SizeofExpr : public BaseExpr {
+        public:
         std::unique_ptr<AST::BaseExpr> idExpr;
         public:
         SizeofExpr(std::unique_ptr<BaseExpr>& idExpr) 
             : idExpr(std::move(idExpr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class InputExpr : public BaseExpr {
-
+        public:
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     // expr -> arr[expr]
     class ArrayExpr : public BaseExpr {
+        public:
         std::string name;
         std::unique_ptr<BaseExpr> expr;
         public:
         ArrayExpr(std::string name, std::unique_ptr<BaseExpr> expr)
                 : name(name)
                 , expr(std::move(expr)) { }
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     // expr -> fun(bool a, int b)
     class FnCallExpr : public BaseExpr {
+        public:
         std::string name; // fn name
         std::vector<std::unique_ptr<BaseExpr>> fnArgs;
         public:
         FnCallExpr(std::string name, 
-                   std::vector<std::unique_ptr<BaseExpr>>& fnArgs1)
-                   : name(name)
-                   {
-                       fnArgs.clear();
-                       for (int i = 0; i < fnArgs1.size(); i++) 
-                       {
-                           fnArgs.push_back(std::move(fnArgs1[i]));
-                       }
-                   }
+                   std::vector<std::unique_ptr<BaseExpr>>& fnArgs1);
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 }

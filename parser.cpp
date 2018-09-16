@@ -5,6 +5,7 @@
 
 #include "consts.hpp"
 #include "baseast.hpp"
+#include "visitor.hpp"
 
 struct Token_t {
     int lineno;
@@ -309,8 +310,9 @@ std::unique_ptr<AST::BaseExpr> parseFalseExpr(int tokIdx) {
 std::unique_ptr<AST::BaseExpr> parseNumberExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
+    int val = std::atoi(curVal.c_str());
     if (match(Token::Number)) {
-        auto result = std::make_unique<AST::IntValue>(std::atoi(curVal.c_str()));
+        auto result = std::make_unique<AST::IntValue>(val);
         res = std::make_unique<AST::BaseExpr>(std::move(result)); 
         return res;
     }
@@ -321,8 +323,9 @@ std::unique_ptr<AST::BaseExpr> parseNumberExpr(int tokIdx) {
 std::unique_ptr<AST::BaseExpr> parseIdentExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
+    auto ident = curVal;
     if (match(Token::Id)) {
-        res = std::make_unique<AST::IdExpr>(curVal); 
+        res = std::make_unique<AST::IdExpr>(ident); 
         return res;
     }
     
@@ -392,9 +395,8 @@ std::unique_ptr<AST::BaseExpr> parseArrayExpr(int tokIdx) {
 
 std::unique_ptr<AST::BaseExpr> parseFncallExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
-
+    std::string name = curVal;
     if (match(Token::Id)) {
-        std::string name = curVal;
         std::vector<std::unique_ptr<AST::BaseExpr>> fnArgs;
         if (curTok == static_cast<int>(Token::PL) && parseFnArgs(curTokIdx, fnArgs))
             return std::make_unique<AST::FnCallExpr>(name, fnArgs);
@@ -559,7 +561,7 @@ bool parsePrintArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& printArgs)
             {
                 std::string val = curVal;
                 match(curTok); // consume string literal
-                res.reset(new AST::StringLiteralExpr(curVal));
+                res.reset(new AST::StringLiteralExpr(val));
             }
             else if (res = parseExpr(curTokIdx))
             {
@@ -809,6 +811,8 @@ int main(int argc, char* argv[]) {
     updateTokenIdx(0);
     try {
         parseProgram2();
+        Visitor::PrintASTVisitor printVisitor;
+        printVisitor.visitProgramAST(fnDefinitions);
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;
         std::cerr << curTok << " " << curVal << std::endl;

@@ -17,7 +17,7 @@ class Exception : public std::runtime_error
             std::cerr << "parser error: " << std::string(what()) << std::endl;
         }
 };
-
+    
 enum class Token
 {
     End             = 0,
