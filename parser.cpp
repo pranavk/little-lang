@@ -775,9 +775,12 @@ int main(int argc, char* argv[]) {
             Visitor::PrintASTVisitor printVisitor;
             printVisitor.visit(&programNode);
         }
+        std::cout << std::endl << "Typechecking ..." << std::endl;
+        Visitor::TypecheckerVisitor typecheckerVisitor;
+        typecheckerVisitor.visit(&programNode);
     } catch(Exception& exc) {
-        std::cout << "NOK" << std::endl;
         std::cerr << curTok << " " << curVal << std::endl;
+        std::cout << "NOK" << std::endl;
         exc.print();
         return 1;   
     }

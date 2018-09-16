@@ -1,6 +1,10 @@
 #pragma once
 
 #include <iostream>
+#include <unordered_map>
+
+#include "consts.hpp"
+#include "symtab.hpp"
 
 namespace AST {
     class FunctionDefinition;
@@ -97,39 +101,50 @@ namespace Visitor {
         virtual void visit(AST::Program*) override;
     };
 
-    class SymbolTable {
-
-    };
-
     class TypecheckerVisitor : public BaseVisitor {
-        SymbolTable symTab;
+        std::unique_ptr<SymbolTable> _symTab;
 
         public:
         virtual void visit(AST::BaseStmt* stmt) { std::cout << "Typechecker visitor " << std::endl; };
-        virtual void visit(AST::StmtBlockStmt* stmtBlock) = 0;
-        virtual void visit(AST::VarDeclStmt*) = 0;
-        virtual void visit(AST::ArrayDeclStmt*) = 0;
-        virtual void visit(AST::PrintStmt* stmt) = 0;
-        virtual void visit(AST::IfStmt*) = 0;
-        virtual void visit(AST::WhileStmt*) = 0;
-        virtual void visit(AST::ForStmt*) = 0;
-        virtual void visit(AST::ReturnStmt*) = 0;
-        virtual void visit(AST::ArrayAssignment*) = 0;
-        virtual void visit(AST::VarAssignment*) = 0;
+        virtual void visit(AST::StmtBlockStmt* stmtBlock) override;
+        virtual void visit(AST::VarDeclStmt*) override;
+        virtual void visit(AST::ArrayDeclStmt*) override;
+        virtual void visit(AST::PrintStmt* stmt) override;
+        virtual void visit(AST::IfStmt*) override;
+        virtual void visit(AST::WhileStmt*) override;
+        virtual void visit(AST::ForStmt*) override;
+        virtual void visit(AST::ReturnStmt*) override;
+        virtual void visit(AST::ArrayAssignment*) override;
+        virtual void visit(AST::VarAssignment*) override;
 
-        virtual void visit(AST::BaseExpr*) = 0;
-        virtual void visit(AST::NumExpr*) = 0;
-        virtual void visit(AST::IdExpr*) = 0;
-        virtual void visit(AST::LiteralExpr*) = 0;
-        virtual void visit(AST::StringLiteralExpr*) = 0;
-        virtual void visit(AST::TernaryExpr*) = 0;
-        virtual void visit(AST::BinopExpr*) = 0;
-        virtual void visit(AST::UnaryExpr*) = 0;
-        virtual void visit(AST::SizeofExpr*) = 0;
-        virtual void visit(AST::InputExpr*) = 0;
-        virtual void visit(AST::ArrayExpr*) = 0;
-        virtual void visit(AST::FnCallExpr*) = 0;
+        virtual void visit(AST::BaseExpr*) override;
+        virtual void visit(AST::NumExpr*) override;
+        virtual void visit(AST::IdExpr*) override;
+        virtual void visit(AST::LiteralExpr*) override;
+        virtual void visit(AST::StringLiteralExpr*) override;
+        virtual void visit(AST::TernaryExpr*) override;
+        virtual void visit(AST::BinopExpr*) override;
+        virtual void visit(AST::UnaryExpr*) override;
+        virtual void visit(AST::SizeofExpr*) override;
+        virtual void visit(AST::InputExpr*) override;
+        virtual void visit(AST::ArrayExpr*) override;
+        virtual void visit(AST::FnCallExpr*) override;
 
         virtual void visit(AST::Program*) override;
+
+        TypecheckerVisitor() {
+            _symTab = std::make_unique<SymbolTable>(nullptr);
+        }
+        ~TypecheckerVisitor() {
+
+        }
+        void EnterScope() {
+            std::unique_ptr<SymbolTable> newSymTab = std::make_unique<SymbolTable>(std::move(_symTab));
+            _symTab = std::move(newSymTab);
+        }
+
+        void LeaveScope() {
+            _symTab = std::make_unique<SymbolTable>(std::move(_symTab));
+        }   
     };
 }

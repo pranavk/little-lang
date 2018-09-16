@@ -1,23 +1,25 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 enum class ExceptionType 
 {
-    Parser
+    Parser,
+    Type
 };
 
 class Exception : public std::runtime_error 
 {
-    ExceptionType type;
+    ExceptionType _type;
     public:
-        Exception(std::string msg) :
-            std::runtime_error(msg), type(ExceptionType::Parser) { };
+        Exception(std::string msg, ExceptionType type = ExceptionType::Parser) :
+            std::runtime_error(msg), _type(type) { };
         void print() {
-            std::cerr << "parser error: " << std::string(what()) << std::endl;
+            std::cerr << (_type == ExceptionType::Parser ? "parser error: " : "type error: ") << std::string(what()) << std::endl;
         }
 };
-    
+
 enum class Token
 {
     End             = 0,

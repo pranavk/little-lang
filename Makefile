@@ -1,5 +1,5 @@
-parser: lex.yy.c parser.cpp printvisitor.cpp baseast.cpp baseast.hpp visitor.hpp
-	g++ -std=c++14 -g lex.yy.c parser.cpp printvisitor.cpp baseast.cpp -o parser
+parser: lex.yy.c parser.cpp printvisitor.cpp baseast.cpp baseast.hpp visitor.hpp typecheckervisitor.cpp symtab.hpp symtab.cpp
+	g++ -std=c++14 -g lex.yy.c parser.cpp printvisitor.cpp baseast.cpp typecheckervisitor.cpp symtab.cpp -o parser
 
 lexer: lex.yy.c
 	gcc lex.yy.c -lfl -o lexer
