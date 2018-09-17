@@ -67,6 +67,17 @@ class SymbolTable
         return res;
     }
 
+    SymbolType getFnRetType(const std::string& name) {
+        // go to the top level sym table.
+        SymbolTable* symTab = this;
+        while (symTab->getParent().get() != nullptr) symTab = symTab->getParent().get();
+
+        auto it = symTab->_table.find(name);
+        if (it == symTab->_table.end())
+            throw Exception("Cannot find function name : " + name);
+        return it->second._returnType;
+    } 
+
     SymbolType getEnclosingFnRetType() {
         SymbolTable* symTab = this;
         while (symTab->getParent().get() != nullptr) {

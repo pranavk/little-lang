@@ -61,6 +61,7 @@ namespace AST {
         virtual bool isIntValue() { return false; }
         virtual bool isBoolValue() { return false; }
         virtual bool isStringValue() { return false; }
+        virtual bool isVoidValue() { return false; }
 
         virtual Token getType() { return Token::Type_void; }
     };
@@ -87,6 +88,12 @@ namespace AST {
         public:
         bool isIntValue() override { return true; }
         Token getType() override { return Token::Type_int; }
+    };
+
+    class VoidValue : public BaseValue {
+        public:
+        bool isVoidValue() override { return true; }
+        Token getType() override { return Token::Type_void; }
     };
 
     std::unique_ptr<BaseValue> createValue(Token type);
@@ -246,6 +253,7 @@ namespace AST {
         public:
         int val;
         NumExpr(int val) : val(val) {}
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class LiteralExpr : public BaseExpr {

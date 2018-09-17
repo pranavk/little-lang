@@ -30,8 +30,10 @@ std::unique_ptr<AST::BaseValue> AST::createValue(Token type) {
                 return std::make_unique<AST::ArrayValue>();
             case Token::Literal_string:
                 return std::make_unique<AST::StringValue>();
+            case Token::Type_void:
+                return std::make_unique<AST::VoidValue>();
             default:
-                return nullptr;
+                assert(false && "not allowed to create such value");
         }
     }
 

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 
 #include "baseast.hpp"
 #include "visitor.hpp"
@@ -77,8 +78,8 @@ void Visitor::TypecheckerVisitor::visit(AST::ForStmt *stmt)
         throw Exception("Id expected in for stmt before colon", ExceptionType::Type);
     
     stmt->container->accept(this);
-    if (!stmt->ident->result->isArrayValue())
-        throw Exception("Id expected in for stmt after colon", ExceptionType::Type);
+    if (!stmt->container->result->isArrayValue())
+        throw Exception("array expected in for stmt after colon", ExceptionType::Type);
     
     stmt->body->accept(this);
 }
@@ -90,7 +91,8 @@ void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
     if (stmt->returnExpr)
     {
         stmt->returnExpr->accept(this);
-        retExprType = TokenToSymbolType(stmt->returnExpr->result->getType());
+        auto m = stmt->returnExpr->result->getType();
+        retExprType = TokenToSymbolType(m);
     }
 
     if (retExprType != expectedRetType)
@@ -170,8 +172,7 @@ void Visitor::TypecheckerVisitor::visit(AST::TernaryExpr* expr)
 
 void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
 {
-    Token op = expr->op;
-
+    const Token op = expr->op;
 
     expr->leftExpr->accept(this);
     Token lType = expr->leftExpr->result->getType();
@@ -182,12 +183,25 @@ void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
     if (lType != rType) {
         throw Exception("binop operands's type mismatch.");
     }
-    expr->result = AST::createValue(lType);
+    if (isCompOp(op))
+        expr->result = AST::createValue(Token::Type_bool);
+    else if (isBinOp(op))
+        expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::UnaryExpr *expr)
 {
+    const Token op = expr->type;
     expr->expr->accept(this);
+    if (op == Token::Op_bang) {
+        if (!expr->expr->result->isBoolValue())
+            throw Exception("Bool expected with bang operator");
+    } else if (op == Token::Op_minus) {
+        if (!expr->expr->result->isIntValue())
+            throw Exception("Only int allowed with minus unary op");
+    } else
+        assert("Wrong operator found in unary Expr.");
+
     expr->result = AST::createValue(expr->expr->result->getType());
 }
 
@@ -208,6 +222,7 @@ void Visitor::TypecheckerVisitor::visit(AST::ArrayExpr *expr)
     expr->expr->accept(this);
     if (!expr->expr->result->isIntValue())   
         throw Exception("Only int allowed as array expression argument");
+    expr->result = AST::createValue(Token::Type_array);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::FnCallExpr *expr)
@@ -219,6 +234,8 @@ void Visitor::TypecheckerVisitor::visit(AST::FnCallExpr *expr)
     {
         arg->accept(this); // TODO: check arg with fn definition formal params types
     }
+    SymbolType fnRetType = _symTab->getFnRetType(expr->name);
+    expr->result = AST::createValue(SymbolToTokenType(fnRetType));
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::Program* program)
@@ -226,7 +243,8 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
     // add functions to symbol table in first pass
     for (auto &fnDef : program->fnDefinitions)
     {
-        if (!_symTab->addSymbol(fnDef->proto->fnName, {SymbolType::Function}))
+        if (!_symTab->addSymbol(fnDef->proto->fnName, 
+                                {SymbolType::Function, TokenToSymbolType(fnDef->proto->fnType)}))
             throw Exception("redefining function :" + fnDef->proto->fnName, ExceptionType::Type);
     }
 
@@ -237,6 +255,9 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
     // iterate over individual funcs
     for (auto& fnDef : program->fnDefinitions)
     {
+        // following hack is because return statement wants to know the type of the function in which it's enclosed in
+        // And we cannot make use of top-level symbol table (which contains all the functions) because we don't know the name of the function
+        // in which the return statement is enclosed.
         // functions have a completely new scope with only internal function name in that scope
         EnterScope();
         _symTab->addSymbol("lilfn_ " + fnDef->proto->fnName, 

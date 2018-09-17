@@ -109,6 +109,10 @@ inline bool isTokenType(int tok)
     return result;
 }
 
+inline bool isBinOp(Token tok) {
+    return static_cast<int>(tok);
+}
+
 inline bool isBinOp(int tok)
 { 
     bool res = false;

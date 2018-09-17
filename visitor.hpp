@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <cassert>
 #include <unordered_map>
 
 #include "consts.hpp"
