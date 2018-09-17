@@ -696,7 +696,7 @@ int main(int argc, char* argv[]) {
     AST::Program programNode;
     updateTokenIdx(0);
     try {
-        std::cout << "Parsing file: " << filename << " ... ";
+        std::cout << "* Parsing file: " << filename << " ... ";
         parseProgram(programNode);
         if (isOn("print-ast")) {
             Visitor::PrintASTVisitor printVisitor;
@@ -711,7 +711,7 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        std::cout << std::endl << "Typechecking ..." << std::endl;
+        std::cout << "  Typechecking ...";
         Visitor::TypecheckerVisitor typecheckerVisitor;
         typecheckerVisitor.visit(&programNode);
         std::cout << "OK" << std::endl;
