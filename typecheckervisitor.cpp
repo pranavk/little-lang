@@ -19,7 +19,7 @@ void Visitor::TypecheckerVisitor::visit(AST::VarDeclStmt *stmt)
 {
     for (auto& var : stmt->decls) 
     {
-        if (!_symTab->addSymbol(var.name, {TokenToSymbolType(var.type)}))
+        if (!_symTab->addSymbol(var.name, var.type))
             throw Exception("redeclaring variable " + var.name, ExceptionType::Type);
     }
 }
@@ -32,7 +32,7 @@ void Visitor::TypecheckerVisitor::visit(AST::ArrayDeclStmt *stmt)
         // check if this expression is an int value
         if (!var.expr->result->isIntValue())
             throw Exception("Expected an expression with value int");
-        if (!_symTab->addSymbol(var.name, {SymbolType::Array}))
+        if (!_symTab->addSymbol(var.name, Token::Type_array))
             throw Exception("redeclaring array " + var.name, ExceptionType::Type);
     } 
 }
@@ -86,13 +86,13 @@ void Visitor::TypecheckerVisitor::visit(AST::ForStmt *stmt)
 
 void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
 {
-    SymbolType retExprType = SymbolType::Void;
-    SymbolType expectedRetType = _symTab->getEnclosingFnRetType();
+    Token retExprType = Token::Type_void;
+    auto m = _symTab->getEnclosingFnProto();
+    Token expectedRetType = m->fnType;
     if (stmt->returnExpr)
     {
         stmt->returnExpr->accept(this);
-        auto m = stmt->returnExpr->result->getType();
-        retExprType = TokenToSymbolType(m);
+        retExprType = stmt->returnExpr->result->getType();
     }
 
     if (retExprType != expectedRetType)
@@ -180,8 +180,8 @@ void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
     expr->rightExpr->accept(this);
     Token rType = expr->rightExpr->result->getType();
 
-    if (lType != rType) {
-        throw Exception("binop operands's type mismatch.");
+    if (lType != rType || lType != Token::Type_int) {
+        throw Exception("binop operands must be both int.");
     }
     if (isCompOp(op))
         expr->result = AST::createValue(Token::Type_bool);
@@ -230,12 +230,22 @@ void Visitor::TypecheckerVisitor::visit(AST::FnCallExpr *expr)
     if (!_symTab->hasSymbol(expr->name))
         throw Exception("calling undefined function : " + expr->name, ExceptionType::Type);
 
+    AST::FunctionPrototype* fnProto = _symTab->getFnProto(expr->name);
+    if (expr->fnArgs.size() != fnProto->fnParams.size())
+        throw Exception("Function " + fnProto->fnName + " expects different number of arguments than given.");
+    
+    int i = 0;
     for (auto& arg: expr->fnArgs)
     {
-        arg->accept(this); // TODO: check arg with fn definition formal params types
+        arg->accept(this);
+        const Token argType = arg->result->getType();
+        const Token paramType = fnProto->fnParams[i].type;
+        if (argType != paramType)
+            throw Exception("Fn call arg types mismatch.");
+        i++;
     }
-    SymbolType fnRetType = _symTab->getFnRetType(expr->name);
-    expr->result = AST::createValue(SymbolToTokenType(fnRetType));
+    expr->result = AST::createValue(fnProto->fnType);
+
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::Program* program)
@@ -243,8 +253,7 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
     // add functions to symbol table in first pass
     for (auto &fnDef : program->fnDefinitions)
     {
-        if (!_symTab->addSymbol(fnDef->proto->fnName, 
-                                {SymbolType::Function, TokenToSymbolType(fnDef->proto->fnType)}))
+        if (!_symTab->addFnSymbol(fnDef->proto->fnName, fnDef->proto.get()))
             throw Exception("redefining function :" + fnDef->proto->fnName, ExceptionType::Type);
     }
 
@@ -260,13 +269,11 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
         // in which the return statement is enclosed.
         // functions have a completely new scope with only internal function name in that scope
         EnterScope();
-        _symTab->addSymbol("lilfn_ " + fnDef->proto->fnName, 
-                                {SymbolType::Function, 
-                                TokenToSymbolType(fnDef->proto->fnType)});
+        _symTab->addFnSymbol("lilfn_ " + fnDef->proto->fnName, fnDef->proto.get());
         EnterScope();
         for(auto& param : fnDef->proto->fnParams)
         {
-            if(!_symTab->addSymbol(param.name, {TokenToSymbolType(param.type)}))
+            if(!_symTab->addSymbol(param.name, param.type))
                 throw Exception("redeclaring variable : " + param.name, ExceptionType::Type);
         }
         fnDef->body->accept(this);

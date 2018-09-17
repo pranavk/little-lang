@@ -1,10 +1,15 @@
 #pragma once
 
 #include <memory>
+#include <cassert>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "consts.hpp"
+
+namespace AST {
+    class FunctionPrototype;
+}
 
 enum class SymbolType {
     Err      = -1,
@@ -20,16 +25,28 @@ enum class SymbolType {
 SymbolType TokenToSymbolType(Token type);
 Token      SymbolToTokenType(SymbolType type);
 
-struct SymbolInfo
+class SymbolInfo
 {
+    public:
     SymbolType _type;
-    SymbolType _returnType; // only used if _type = Function.
+    virtual AST::FunctionPrototype* getFnProto() { return nullptr; }
+    SymbolInfo(SymbolType type) : _type(type) { }
+};
+
+class FnSymbolInfo : public SymbolInfo {
+    AST::FunctionPrototype* _proto; 
+
+    public:
+    AST::FunctionPrototype* getFnProto() override { return _proto; }
+    FnSymbolInfo(AST::FunctionPrototype* proto) 
+            : _proto(proto)
+            , SymbolInfo(SymbolType::Function) { }
 };
 
 class SymbolTable
 {
     std::unique_ptr<SymbolTable> _parent;
-    std::unordered_map<std::string, SymbolInfo> _table;
+    std::unordered_map<std::string, std::unique_ptr<SymbolInfo>> _table;
 
   public:
     SymbolTable(std::unique_ptr<SymbolTable>&& parent) 
@@ -49,7 +66,7 @@ class SymbolTable
         SymbolInfo* res = nullptr;
         auto it = _table.find(name);
         if (it != _table.end()) {
-            res = &it->second;
+            res = it->second.get();
         }
 
         return res;
@@ -67,36 +84,46 @@ class SymbolTable
         return res;
     }
 
-    SymbolType getFnRetType(const std::string& name) {
+    AST::FunctionPrototype* getFnProto(const std::string& name) {
         // go to the top level sym table.
         SymbolTable* symTab = this;
         while (symTab->getParent().get() != nullptr) symTab = symTab->getParent().get();
 
         auto it = symTab->_table.find(name);
-        if (it == symTab->_table.end())
+        if (it == symTab->_table.end() || it->second->_type != SymbolType::Function)
             throw Exception("Cannot find function name : " + name);
-        return it->second._returnType;
+        assert(it->second->getFnProto());
+        return it->second->getFnProto();
     } 
 
-    SymbolType getEnclosingFnRetType() {
+    AST::FunctionPrototype* getEnclosingFnProto() {
         SymbolTable* symTab = this;
         while (symTab->getParent().get() != nullptr) {
             if (symTab->_table.size() == 1) {
                 auto it = symTab->_table.begin();
                 if (it->first.substr(0, 6) == "lilfn_") {
-                    return it->second._returnType;
+                    assert(it->second->getFnProto());
+                    return it->second->getFnProto();
                 }
             }
 
             symTab = symTab->getParent().get();
         }
 
-        return SymbolType::Err;
+        return nullptr;
     }
 
-    bool addSymbol(const std::string& name, SymbolInfo&& info) {
+    bool addFnSymbol(const std::string& name, AST::FunctionPrototype* proto) {
         if (!hasSymbol(name)) {
-            auto res = _table.emplace(name, info);
+            auto res = _table.emplace(name, std::make_unique<FnSymbolInfo>(proto));
+            return res.second;
+        }
+        return false;
+    }
+
+    bool addSymbol(const std::string& name, Token type) {
+        if (!hasSymbol(name)) {
+            auto res = _table.emplace(name, std::make_unique<SymbolInfo>(TokenToSymbolType(type)));
             return res.second;
         }
         return false;

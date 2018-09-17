@@ -145,7 +145,7 @@ namespace Visitor {
         }
 
         void LeaveScope() {
-            _symTab = std::make_unique<SymbolTable>(std::move(_symTab));
+            _symTab = std::move(_symTab->getParent());
         }   
     };
 }
