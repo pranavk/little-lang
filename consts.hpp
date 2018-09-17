@@ -141,11 +141,20 @@ inline bool isBinOp(int tok)
     return res;
 }
 
-inline bool isCompOp(Token op) {
+inline bool isAndOr(Token op) {
     bool res = false;
     switch(op) {
         case Token::Op_and:
         case Token::Op_or:
+            res = true;
+    }
+
+    return res;   
+}
+
+inline bool isCompOp(Token op) {
+    bool res = false;
+    switch(op) {
         case Token::Op_neq:
         case Token::Op_eqeq:
         case Token::Op_gt:

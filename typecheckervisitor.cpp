@@ -101,26 +101,27 @@ void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::TypecheckerVisitor::visit(AST::ArrayAssignment *stmt)
 {
+    SymbolInfo* info = nullptr;
+    if (!(info = _symTab->hasSymbol(stmt->name)))
+        throw Exception("Assigning element to an undeclared array.");
     stmt->idxExpr->accept(this);
-    
-
-    
-
-    
-    
+    if (!stmt->idxExpr->result->isIntValue())
+        throw Exception("only int allowed as array index");
     stmt->expr->accept(this);
-    
+    if (!stmt->expr->result->isIntValue())
+        throw Exception("rhs of array assignment must be int");
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::VarAssignment *stmt)
 {
-    
-    
-
-    
-    
+    SymbolInfo* info = nullptr;
+    if (!(info =_symTab->hasSymbol(stmt->name)))
+        throw Exception("Undeclared variable is being assigned.");
     stmt->expr->accept(this);
-    
+    const Token rhsType = stmt->expr->result->getType();
+    const Token lhsType = SymbolToTokenType(info->_type);
+    if (lhsType != rhsType)
+        throw Exception("unmatched types in var assignment.");
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::BaseExpr* expr)
@@ -130,7 +131,7 @@ void Visitor::TypecheckerVisitor::visit(AST::BaseExpr* expr)
 
 void Visitor::TypecheckerVisitor::visit(AST::NumExpr *expr)
 {
-    expr->result = std::make_unique<AST::IntValue>();
+    expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::IdExpr *expr)
@@ -180,13 +181,23 @@ void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
     expr->rightExpr->accept(this);
     Token rType = expr->rightExpr->result->getType();
 
-    if (lType != rType || lType != Token::Type_int) {
-        throw Exception("binop operands must be both int.");
+    if (lType != rType) {
+        throw Exception("binop operands must be same type.");
     }
-    if (isCompOp(op))
+    if (isAndOr(op)) {
+        if (lType != Token::Type_bool)
+            throw Exception("only bool operands allowed with & and |");
         expr->result = AST::createValue(Token::Type_bool);
-    else if (isBinOp(op))
+    } else if (isCompOp(op)) {
+        if (lType != Token::Type_int)
+            throw Exception("only int opearnds allowed with comparison operator");
+        expr->result = AST::createValue(Token::Type_bool);
+    } else if (isBinOp(op)) {
+        if (lType != Token::Type_int)
+            throw Exception("only int operands allowed with this operator.");
         expr->result = AST::createValue(Token::Type_int);
+    } else 
+        assert(false && "unhandled operator found");
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::UnaryExpr *expr)
@@ -210,11 +221,12 @@ void Visitor::TypecheckerVisitor::visit(AST::SizeofExpr *expr)
     expr->idExpr->accept(this);
     if (!expr->idExpr->result->isArrayValue())
         throw Exception("Sizeof argument should be an array value");
+    expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::InputExpr *expr)
 {
-    
+    expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::ArrayExpr *expr)
@@ -222,7 +234,7 @@ void Visitor::TypecheckerVisitor::visit(AST::ArrayExpr *expr)
     expr->expr->accept(this);
     if (!expr->expr->result->isIntValue())   
         throw Exception("Only int allowed as array expression argument");
-    expr->result = AST::createValue(Token::Type_array);
+    expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::FnCallExpr *expr)
