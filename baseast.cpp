@@ -20,6 +20,21 @@ void AST::FunctionDefinition::print()
     }
 }
 
+std::unique_ptr<AST::BaseValue> AST::createValue(Token type) {
+        switch(type) {
+            case Token::Type_int:
+                return std::make_unique<AST::IntValue>();
+            case Token::Type_bool:
+                return std::make_unique<AST::BoolValue>();
+            case Token::Type_array:
+                return std::make_unique<AST::ArrayValue>();
+            case Token::Literal_string:
+                return std::make_unique<AST::StringValue>();
+            default:
+                return nullptr;
+        }
+    }
+
 AST::PrintStmt::PrintStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
 {
     args.clear();

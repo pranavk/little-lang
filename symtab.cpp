@@ -15,3 +15,18 @@ SymbolType TokenToSymbolType(Token type) {
             return SymbolType::Err;
     }
 }
+
+Token SymbolToTokenType(SymbolType type) {
+  switch(type) {
+        case SymbolType::Array:
+            return Token::Type_array;
+        case SymbolType::Int:
+            return Token::Type_int;
+        case SymbolType::Void:
+            return Token::Type_void;
+        case SymbolType::Bool:
+            return Token::Type_bool;
+        default:
+            return Token::Err;
+    }
+}

@@ -164,17 +164,17 @@ void Visitor::PrintASTVisitor::visit(AST::VarAssignment *stmt)
 
 void Visitor::PrintASTVisitor::visit(AST::BaseExpr* expr)
 {
-    print({expr->result->getVal()});
+    std::cout << "Not implementeed printastvisitor baseexpr" << std::endl;
 }
 
 void Visitor::PrintASTVisitor::visit(AST::NumExpr *expr)
 {
-    print({expr->result->getVal()}); // this will print some \t's
+    print({std::to_string(expr->val)}); 
 }
 
 void Visitor::PrintASTVisitor::visit(AST::IdExpr *expr)
 {
-    print({expr->name, ":ID"}); // this will print some \t's
+    print({expr->name, ":ID"});
 }
 
 void Visitor::PrintASTVisitor::visit(AST::LiteralExpr *expr)

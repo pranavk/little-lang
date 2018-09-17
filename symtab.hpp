@@ -18,24 +18,22 @@ enum class SymbolType {
 };
 
 SymbolType TokenToSymbolType(Token type);
+Token      SymbolToTokenType(SymbolType type);
 
 struct SymbolInfo
 {
     SymbolType _type;
+    SymbolType _returnType; // only used if _type = Function.
 };
 
 class SymbolTable
 {
     std::unique_ptr<SymbolTable> _parent;
- //   std::unordered_set<std::unique_ptr<SymbolTable>> _children;
     std::unordered_map<std::string, SymbolInfo> _table;
 
   public:
     SymbolTable(std::unique_ptr<SymbolTable>&& parent) 
                     : _parent(std::move(parent)) { 
-        if (_parent) {
-     //       _parent->addChild();
-        }
     }
 
     std::unique_ptr<SymbolTable>& getParent() {
@@ -46,23 +44,43 @@ class SymbolTable
   //      _children.insert(std::move(child));
     }
 
-    bool hasSymbolInCurrentScope(const std::string& name) {
+    SymbolInfo* hasSymbolInCurrentScope(const std::string& name) {
         // only check for symbol existence in current scope
-        return _table.find(name) != _table.end();
+        SymbolInfo* res = nullptr;
+        auto it = _table.find(name);
+        if (it != _table.end()) {
+            res = &it->second;
+        }
+
+        return res;
     }
 
-    bool hasSymbol(const std::string& name) {
+    SymbolInfo* hasSymbol(const std::string& name) {
         // check if this symbol exists in our symbol table chain
+        SymbolInfo* res = nullptr;
         SymbolTable* symTab = this;
         do {
-            if (symTab->hasSymbolInCurrentScope(name)) {
-                return true;
+            res = symTab->hasSymbolInCurrentScope(name);
+            symTab = symTab->getParent().get();
+        } while (!res && symTab != nullptr);
+
+        return res;
+    }
+
+    SymbolType getEnclosingFnRetType() {
+        SymbolTable* symTab = this;
+        while (symTab->getParent().get() != nullptr) {
+            if (symTab->_table.size() == 1) {
+                auto it = symTab->_table.begin();
+                if (it->first.substr(0, 6) == "lilfn_") {
+                    return it->second._returnType;
+                }
             }
 
             symTab = symTab->getParent().get();
-        } while (symTab != nullptr);
+        }
 
-        return false;
+        return SymbolType::Err;
     }
 
     bool addSymbol(const std::string& name, SymbolInfo&& info) {

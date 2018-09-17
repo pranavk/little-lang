@@ -62,77 +62,6 @@ bool match(Token tok)
     return match(static_cast<int>(tok));
 }
 
-bool isBinOp()
-{ 
-    bool res = false;
-    switch(static_cast<Token>(curTok))
-    {
-        case Token::Op_add:
-        case Token::Op_minus:
-        case Token::Op_mult:
-        case Token::Op_divide:
-        case Token::Op_exp:
-        case Token::Op_mod:
-        case Token::Op_and:
-        case Token::Op_or:
-        case Token::Op_eqeq:
-        case Token::Op_neq:
-        case Token::Op_gt:
-        case Token::Op_gte:
-        case Token::Op_lt:
-        case Token::Op_lte:
-            res = true;
-            break;
-        default:
-            res = false;
-    }
-
-    return res;
-}
-
-bool isUnaryOp()
-{
-    bool res = false;
-    switch(static_cast<Token>(curTok))
-    {
-        case Token::Op_bang:
-        case Token::Op_minus:
-            res = true;
-            break;
-        default:
-            res = false;
-    }
-
-    return res;
-}
-
-bool strict_match(Token tok) 
-{
-    bool res = false;
-    if (!(res = match(tok)))
-        throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno) +
-                        "\tExpected " + std::to_string(static_cast<int>(tok)) +
-                         ", found " + std::to_string(curTok));
-    return res;
-}
-
-bool isTokenType(int tok)
-{
-    bool result;
-    switch(tok) {
-        case static_cast<int>(Token::Type_array):
-        case static_cast<int>(Token::Type_int):
-        case static_cast<int>(Token::Type_bool):
-        case static_cast<int>(Token::Type_void):
-            result = true;
-        break;
-        default:
-            result = false;
-    }
-
-    return result;
-}
-
 std::unique_ptr<AST::BaseStmt> parseVarDecls(int tokIdx)
 {
     updateTokenIdx(tokIdx);
@@ -192,7 +121,7 @@ std::unique_ptr<AST::BaseExpr> parseTrueExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     if (match(Token::Literal_true)) {
-        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>(true));
+        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>());
         return res;
     }
 
@@ -203,7 +132,7 @@ std::unique_ptr<AST::BaseExpr> parseFalseExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     if (match(Token::Literal_false)) {
-        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>(false));
+        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>());
         return res;
     }
 
@@ -215,9 +144,7 @@ std::unique_ptr<AST::BaseExpr> parseNumberExpr(int tokIdx) {
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     int val = std::atoi(curVal.c_str());
     if (match(Token::Number)) {
-        auto result = std::make_unique<AST::IntValue>(val);
-        res = std::make_unique<AST::BaseExpr>(std::move(result)); 
-        return res;
+        return std::make_unique<AST::NumExpr>(val);
     }
     
     return nullptr;
@@ -314,7 +241,7 @@ std::unique_ptr<AST::BaseExpr> parseBinopExpr(int tokIdx) {
 
     if (match(Token::PL)) {
         auto lExpr = parseExpr(curTokIdx);
-        if (isBinOp()) {
+        if (isBinOp(curTok)) {
             Token op = static_cast<Token>(curTok);
             if (match(curTok)) { // consume binop
                 auto rExpr = parseExpr(curTokIdx);
@@ -334,7 +261,7 @@ std::unique_ptr<AST::BaseExpr> parseUnaryopExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
 
     if (match(Token::PL)) {
-        if (isUnaryOp()) {
+        if (isUnaryOp(curTok)) {
             Token op = static_cast<Token>(curTok);
             if (match(curTok)) { // consume unaryop
                 auto rExpr = parseExpr(curTokIdx);

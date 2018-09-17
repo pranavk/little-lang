@@ -56,29 +56,40 @@ namespace AST {
     class BaseValue {
         public:
         virtual ~BaseValue() = default;
-        virtual std::string getVal() = 0;
+
+        virtual bool isArrayValue() { return false; }
+        virtual bool isIntValue() { return false; }
+        virtual bool isBoolValue() { return false; }
+        virtual bool isStringValue() { return false; }
+
+        virtual Token getType() { return Token::Type_void; }
     };
 
     class StringValue : public BaseValue {
-        std::string value;
         public:
-        StringValue(std::string& value) : value(value) { }
-        std::string getVal() override { return value; }
+        bool isStringValue() override { return true; }
+        Token getType() override { return Token::Literal_string; }
+    };
+
+    class ArrayValue : public BaseValue {
+        public:
+        bool isArrayValue() override { return true; }
+        Token getType() override { return Token::Type_array; }
     };
 
     class BoolValue : public BaseValue {
-        bool value;
         public:
-        BoolValue(bool value) : value(value) { }
-        std::string getVal() override { return std::to_string(value); }
+        bool isBoolValue() override { return true; }
+        Token getType() override { return Token::Type_bool; }
     };
 
     class IntValue : public BaseValue {
-        int value;
         public:
-        IntValue(int value) : value(value) { }
-        std::string getVal() override { return std::to_string(value); }
+        bool isIntValue() override { return true; }
+        Token getType() override { return Token::Type_int; }
     };
+
+    std::unique_ptr<BaseValue> createValue(Token type);
 
     // various types of statements
     class BaseExpr : public BaseStmt {
@@ -232,6 +243,9 @@ namespace AST {
 
     // expr -> [number]
     class NumExpr : public BaseExpr {
+        public:
+        int val;
+        NumExpr(int val) : val(val) {}
     };
 
     class LiteralExpr : public BaseExpr {
