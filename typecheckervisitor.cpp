@@ -183,10 +183,13 @@ void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
 
     if (lType != rType) {
         throw Exception("binop operands must be same type.");
-    }
-    if (isAndOr(op)) {
+    } else if (isAndOr(op)) {
         if (lType != Token::Type_bool)
             throw Exception("only bool operands allowed with & and |");
+        expr->result = AST::createValue(Token::Type_bool);
+    } else if (isEqOrNeq(op)) {
+        if (lType != Token::Type_int && lType != Token::Type_bool)
+            throw Exception("only int and bool allowed with == and !=");
         expr->result = AST::createValue(Token::Type_bool);
     } else if (isCompOp(op)) {
         if (lType != Token::Type_int)

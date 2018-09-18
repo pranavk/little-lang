@@ -168,6 +168,17 @@ inline bool isCompOp(Token op) {
     return res;
 }
 
+inline bool isEqOrNeq(Token op) {
+    bool res = false;
+    switch(op) {
+        case Token::Op_eqeq:
+        case Token::Op_neq:
+            res = true;
+    }
+    
+    return res;
+}
+
 extern int yylineno;
 extern char* yytext;
 
