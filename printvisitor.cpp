@@ -133,6 +133,17 @@ void Visitor::PrintASTVisitor::visit(AST::ReturnStmt *stmt)
     }
 }
 
+void Visitor::PrintASTVisitor::visit(AST::AbortStmt *stmt)
+{
+    print({"abort: "});
+    _depth++;
+    for (auto& expr : stmt->args) 
+    {
+        expr->accept(this);
+    }
+    _depth--;
+}
+
 void Visitor::PrintASTVisitor::visit(AST::ArrayAssignment *stmt)
 {
     print({"ident[idxExpr] = expr"});

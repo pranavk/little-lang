@@ -99,6 +99,16 @@ void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
         throw Exception("Return type mismatch from fn def", ExceptionType::Type);
 }
 
+void Visitor::TypecheckerVisitor::visit(AST::AbortStmt *stmt)
+{
+    for (auto& expr : stmt->args) 
+    {
+        expr->accept(this);
+        if (!expr->result->isStringValue() && !expr->result->isIntValue()) 
+            throw Exception("only string or int allowed as abort stmt arguments", ExceptionType::Type);
+    }
+}
+
 void Visitor::TypecheckerVisitor::visit(AST::ArrayAssignment *stmt)
 {
     SymbolInfo* info = nullptr;
@@ -292,6 +302,20 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
                 throw Exception("redeclaring variable : " + param.name, ExceptionType::Type);
         }
         fnDef->body->accept(this);
+
+        // check if the last statement of non-void function body is return/abort or not
+        auto& lastStmt = fnDef->body->stmt_list.back();
+        // condition = last statement of "non-void" functions should be abort or return
+        bool lastStmtConditionMet = true; 
+        if (fnDef->proto->fnType != Token::Type_void) {
+            lastStmtConditionMet = false;
+            if (dynamic_cast<AST::AbortStmt*>(lastStmt.get()) || 
+                dynamic_cast<AST::ReturnStmt*>(lastStmt.get()))
+                lastStmtConditionMet = true;      
+        }
+        if (!lastStmtConditionMet)
+            throw Exception("Last statement of non-void function should be return or abort.");
+
         LeaveScope();
         LeaveScope();
     }

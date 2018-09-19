@@ -46,6 +46,15 @@ AST::PrintStmt::PrintStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
     }
 }
 
+AST::AbortStmt::AbortStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
+{
+    args.clear();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        args.push_back(std::move(vec[i]));
+    }
+}
+
 AST::FnCallExpr::FnCallExpr(std::string name,
                             std::vector<std::unique_ptr<BaseExpr>> &fnArgs1)
                             : name(name)

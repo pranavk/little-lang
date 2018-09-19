@@ -39,10 +39,10 @@ namespace AST {
     class FunctionDefinition {
         public:
         std::unique_ptr<FunctionPrototype> proto;
-        std::unique_ptr<BaseStmt> body;
+        std::unique_ptr<StmtBlockStmt> body;
 
         FunctionDefinition(std::unique_ptr<FunctionPrototype> proto, 
-                           std::unique_ptr<BaseStmt> body)
+                           std::unique_ptr<StmtBlockStmt> body)
             : proto(std::move(proto)), body(std::move(body)) { }
     
         void print();
@@ -213,6 +213,14 @@ namespace AST {
         public:
         ReturnStmt(std::unique_ptr<BaseExpr>& returnExpr)
                     : returnExpr(std::move(returnExpr)) { }
+
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
+    };
+
+    class AbortStmt : public BaseStmt {
+        public:
+        std::vector<std::unique_ptr<BaseExpr>> args;
+        AbortStmt(std::vector<std::unique_ptr<BaseExpr>>& vec);
 
         void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };

@@ -60,6 +60,7 @@ NUMBER [-]?{DIGIT}+
 "while"                    { return static_cast<int>(Token::While); }
 "for"                      { return static_cast<int>(Token::For); }
 "return"                   { return static_cast<int>(Token::Return); }
+"abort"                    { return static_cast<int>(Token::Abort); }
 
 \n                         { return static_cast<int>(Token::EOL); }
 [\t\r ]+                   { }

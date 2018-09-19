@@ -21,6 +21,7 @@ namespace AST {
     class WhileStmt;
     class ForStmt;
     class ReturnStmt;
+    class AbortStmt;
     class ArrayAssignment;
     class VarAssignment;
 
@@ -49,6 +50,7 @@ namespace Visitor {
         virtual void visit(AST::WhileStmt*) = 0;
         virtual void visit(AST::ForStmt*) = 0;
         virtual void visit(AST::ReturnStmt*) = 0;
+        virtual void visit(AST::AbortStmt*) = 0;
         virtual void visit(AST::ArrayAssignment*) = 0;
         virtual void visit(AST::VarAssignment*) = 0;
 
@@ -83,6 +85,7 @@ namespace Visitor {
         virtual void visit(AST::WhileStmt*) override;
         virtual void visit(AST::ForStmt*) override;
         virtual void visit(AST::ReturnStmt*) override;
+        virtual void visit(AST::AbortStmt*) override;
         virtual void visit(AST::ArrayAssignment*) override;
         virtual void visit(AST::VarAssignment*) override;
 
@@ -115,6 +118,7 @@ namespace Visitor {
         virtual void visit(AST::WhileStmt*) override;
         virtual void visit(AST::ForStmt*) override;
         virtual void visit(AST::ReturnStmt*) override;
+        virtual void visit(AST::AbortStmt*) override;
         virtual void visit(AST::ArrayAssignment*) override;
         virtual void visit(AST::VarAssignment*) override;
 

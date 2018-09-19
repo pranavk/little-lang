@@ -73,7 +73,8 @@ enum class Token
     While           = 40,
     For             = 41,
     Return          = 42,
-    Sizeof          = 43
+    Sizeof          = 43,
+    Abort           = 44
 };
 
 inline bool isUnaryOp(int tok)

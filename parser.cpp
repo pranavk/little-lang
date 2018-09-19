@@ -374,7 +374,8 @@ std::unique_ptr<AST::BaseStmt> parseArrayAssignment(int tokIdx)
     return nullptr;
 }
 
-bool parsePrintArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& printArgs)
+// parses list of arguments which is either string or expr (and there is atleast one of such)
+bool parseStringOrExprArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& args)
 {
     bool ret = false;
     if (match(Token::PL))
@@ -401,12 +402,12 @@ bool parsePrintArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& printArgs)
             first = false;
             if (!res)
                 return false;
-            printArgs.push_back(std::move(res));      
+            args.push_back(std::move(res));      
         }
     }
 
     // atleast one argument is required
-    ret = ret && printArgs.size() > 0;
+    ret = ret && args.size() > 0;
     return ret;
 }
 
@@ -416,8 +417,22 @@ std::unique_ptr<AST::BaseStmt> parsePrintStmt(int tokIdx)
 
     if (match(Token::Print)) {
         std::vector<std::unique_ptr<AST::BaseExpr>> args;
-        if (parsePrintArgs(args)) {
+        if (parseStringOrExprArgs(args)) {
             return std::make_unique<AST::PrintStmt>(args);
+        }
+    }
+
+    return nullptr;
+}
+
+std::unique_ptr<AST::BaseStmt> parseAbortStmt(int tokIdx) 
+{
+    updateTokenIdx(tokIdx);
+
+    if (match(Token::Abort)) {
+        std::vector<std::unique_ptr<AST::BaseExpr>> args;
+        if (parseStringOrExprArgs(args)) {
+            return std::make_unique<AST::AbortStmt>(args);
         }
     }
 
@@ -518,6 +533,11 @@ std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
         if (match(Token::EOL))
             return res;
     }
+    if (res = parseAbortStmt(tokIdx))
+    {
+        if (match(Token::EOL))
+            return res;
+    }
     if (res = parseIfStmt(tokIdx))
     {
         return res;
@@ -578,7 +598,7 @@ std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock(int tokIdx)
     return nullptr;
 }
 
-std::unique_ptr<AST::BaseStmt> parseFnBody()
+std::unique_ptr<AST::StmtBlockStmt> parseFnBody()
 {
     return parseStmtBlock(curTokIdx);
 }
