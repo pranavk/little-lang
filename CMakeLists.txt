@@ -7,11 +7,8 @@ find_package(FLEX REQUIRED)
 message(STATUS "Found Flex ${FLEX_VERSION}")
 FLEX_TARGET(lilFlex ${CMAKE_SOURCE_DIR}/lexer.l ${CMAKE_SOURCE_DIR}/scanner.cpp)
 
-
 FILE(GLOB SRCFILES *.cpp)
-FILE(GLOB HEADERFILES *.hpp)
-
 add_library(flex STATIC IMPORTED GLOBAL)
 
 add_executable(lilang ${SRCFILES} ${FLEX_lilFlex_OUTPUTS})
-target_link_libraries(lilang ${FLEX_LIBRARIES})
+target_link_libraries(lilang)
