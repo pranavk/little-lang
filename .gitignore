@@ -1,7 +1,4 @@
 *~
 *.swp
-a.out
-lexer
-lex.yy.c
+scanner.cpp
 .vscode
-parser
