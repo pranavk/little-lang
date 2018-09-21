@@ -3,6 +3,7 @@
 Create a buid directory for yourself and do:
 
 `cmake ..` (assuming you created builddir in the root directory)
+
 `make`
 
 It will create binary called `lilang`
