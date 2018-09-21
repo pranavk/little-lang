@@ -17,7 +17,7 @@ void Visitor::TypecheckerVisitor::visit(AST::StmtBlockStmt *stmtBlock)
 
 void Visitor::TypecheckerVisitor::visit(AST::VarDeclStmt *stmt)
 {
-    for (auto& var : stmt->decls) 
+    for (auto& var : stmt->decls)
     {
         if (!_symTab->addSymbol(var.name, var.type))
             throw Exception("redeclaring variable " + var.name, ExceptionType::Type);
@@ -25,8 +25,8 @@ void Visitor::TypecheckerVisitor::visit(AST::VarDeclStmt *stmt)
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::ArrayDeclStmt *stmt)
-{ 
-    for (auto& var : stmt->decls) 
+{
+    for (auto& var : stmt->decls)
     {
         var.expr->accept(this);
         // check if this expression is an int value
@@ -34,15 +34,15 @@ void Visitor::TypecheckerVisitor::visit(AST::ArrayDeclStmt *stmt)
             throw Exception("Expected an expression with value int");
         if (!_symTab->addSymbol(var.name, Token::Type_array))
             throw Exception("redeclaring array " + var.name, ExceptionType::Type);
-    } 
+    }
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::PrintStmt *stmt)
 {
-    for (auto& expr : stmt->args) 
+    for (auto& expr : stmt->args)
     {
         expr->accept(this);
-        if (!expr->result->isStringValue() && !expr->result->isIntValue()) 
+        if (!expr->result->isStringValue() && !expr->result->isIntValue())
             throw Exception("only string literals and int identifiers allowed in print args", ExceptionType::Type);
     }
 }
@@ -57,7 +57,7 @@ void Visitor::TypecheckerVisitor::visit(AST::IfStmt *stmt)
 
     if (stmt->falseStmt)
     {
-        stmt->falseStmt->accept(this);  
+        stmt->falseStmt->accept(this);
     }
 }
 
@@ -66,7 +66,7 @@ void Visitor::TypecheckerVisitor::visit(AST::WhileStmt *stmt)
     stmt->cond->accept(this);
     if (!stmt->cond->result->isBoolValue())
         throw Exception("Only bool value allowed as while stmt condition.", ExceptionType::Type);
-     
+
     stmt->body->accept(this);
 }
 
@@ -76,11 +76,11 @@ void Visitor::TypecheckerVisitor::visit(AST::ForStmt *stmt)
     stmt->ident->accept(this);
     if (!stmt->ident->result->isIntValue())
         throw Exception("Id expected in for stmt before colon", ExceptionType::Type);
-    
+
     stmt->container->accept(this);
     if (!stmt->container->result->isArrayValue())
         throw Exception("array expected in for stmt after colon", ExceptionType::Type);
-    
+
     stmt->body->accept(this);
 }
 
@@ -101,10 +101,10 @@ void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::TypecheckerVisitor::visit(AST::AbortStmt *stmt)
 {
-    for (auto& expr : stmt->args) 
+    for (auto& expr : stmt->args)
     {
         expr->accept(this);
-        if (!expr->result->isStringValue() && !expr->result->isIntValue()) 
+        if (!expr->result->isStringValue() && !expr->result->isIntValue())
             throw Exception("only string or int allowed as abort stmt arguments", ExceptionType::Type);
     }
 }
@@ -136,7 +136,7 @@ void Visitor::TypecheckerVisitor::visit(AST::VarAssignment *stmt)
 
 void Visitor::TypecheckerVisitor::visit(AST::BaseExpr* expr)
 {
-    
+
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::NumExpr *expr)
@@ -167,8 +167,8 @@ void Visitor::TypecheckerVisitor::visit(AST::TernaryExpr* expr)
 {
     expr->condExpr->accept(this);
     if (!expr->condExpr->result->isBoolValue())
-        throw Exception("first arg to ternary expr should be bool type");   
-    
+        throw Exception("first arg to ternary expr should be bool type");
+
     expr->trueExpr->accept(this);
     Token trueType = expr->trueExpr->result->getType();
 
@@ -177,7 +177,7 @@ void Visitor::TypecheckerVisitor::visit(AST::TernaryExpr* expr)
 
     if (trueType != falseType)
         throw Exception("ternary: true and false expression should be same type");
-    
+
     expr->result = AST::createValue(trueType);
 }
 
@@ -209,7 +209,7 @@ void Visitor::TypecheckerVisitor::visit(AST::BinopExpr* expr)
         if (lType != Token::Type_int)
             throw Exception("only int operands allowed with this operator.");
         expr->result = AST::createValue(Token::Type_int);
-    } else 
+    } else
         assert(false && "unhandled operator found");
 }
 
@@ -245,7 +245,7 @@ void Visitor::TypecheckerVisitor::visit(AST::InputExpr *expr)
 void Visitor::TypecheckerVisitor::visit(AST::ArrayExpr *expr)
 {
     expr->expr->accept(this);
-    if (!expr->expr->result->isIntValue())   
+    if (!expr->expr->result->isIntValue())
         throw Exception("Only int allowed as array expression argument");
     expr->result = AST::createValue(Token::Type_int);
 }
@@ -258,7 +258,7 @@ void Visitor::TypecheckerVisitor::visit(AST::FnCallExpr *expr)
     AST::FunctionPrototype* fnProto = _symTab->getFnProto(expr->name);
     if (expr->fnArgs.size() != fnProto->fnParams.size())
         throw Exception("Function " + fnProto->fnName + " expects different number of arguments than given.");
-    
+
     int i = 0;
     for (auto& arg: expr->fnArgs)
     {
@@ -306,12 +306,12 @@ void Visitor::TypecheckerVisitor::visit(AST::Program* program)
         // check if the last statement of non-void function body is return/abort or not
         auto& lastStmt = fnDef->body->stmt_list.back();
         // condition = last statement of "non-void" functions should be abort or return
-        bool lastStmtConditionMet = true; 
+        bool lastStmtConditionMet = true;
         if (fnDef->proto->fnType != Token::Type_void) {
             lastStmtConditionMet = false;
-            if (dynamic_cast<AST::AbortStmt*>(lastStmt.get()) || 
+            if (dynamic_cast<AST::AbortStmt*>(lastStmt.get()) ||
                 dynamic_cast<AST::ReturnStmt*>(lastStmt.get()))
-                lastStmtConditionMet = true;      
+                lastStmtConditionMet = true;
         }
         if (!lastStmtConditionMet)
             throw Exception("Last statement of non-void function should be return or abort.");

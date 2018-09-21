@@ -46,18 +46,18 @@ void skipEOLs()
 }
 
 bool match(int tok)
-{  
+{
     bool match = false;
     if (tok == curTok)
     {
         // discard the curTok now
-        getNextTok(); 
+        getNextTok();
 	    match = true;
     }
     return match;
 }
 
-bool match(Token tok) 
+bool match(Token tok)
 {
     return match(static_cast<int>(tok));
 }
@@ -71,7 +71,7 @@ std::unique_ptr<AST::BaseStmt> parseVarDecls(int tokIdx)
         std::unique_ptr<AST::VarDeclStmt> varDeclStmt(new AST::VarDeclStmt);
 
         match(curTok); // consume the type
-        while (curTok == static_cast<int>(Token::Id)) 
+        while (curTok == static_cast<int>(Token::Id))
         {
             std::string varName = curVal;
             match(Token::Id); // consume 'id'
@@ -146,7 +146,7 @@ std::unique_ptr<AST::BaseExpr> parseNumberExpr(int tokIdx) {
     if (match(Token::Number)) {
         return std::make_unique<AST::NumExpr>(val);
     }
-    
+
     return nullptr;
 }
 
@@ -155,10 +155,10 @@ std::unique_ptr<AST::BaseExpr> parseIdentExpr(int tokIdx) {
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     auto ident = curVal;
     if (match(Token::Id)) {
-        res = std::make_unique<AST::IdExpr>(ident); 
+        res = std::make_unique<AST::IdExpr>(ident);
         return res;
     }
-    
+
     return nullptr;
 }
 
@@ -174,7 +174,7 @@ std::unique_ptr<AST::BaseExpr> parseTernaryExpr(int tokIdx) {
                 if (match(Token::PR)) {
                     return std::make_unique<AST::TernaryExpr>(std::move(condE),
                                                               std::move(trueE),
-                                                              std::move(falseE)); 
+                                                              std::move(falseE));
                 }
             }
         }
@@ -274,7 +274,7 @@ std::unique_ptr<AST::BaseExpr> parseUnaryopExpr(int tokIdx) {
     return nullptr;
 }
 
-std::unique_ptr<AST::BaseExpr> parseExpr(int tokIdx) 
+std::unique_ptr<AST::BaseExpr> parseExpr(int tokIdx)
 {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
@@ -343,9 +343,9 @@ std::unique_ptr<AST::BaseStmt> parseArrayDecls(int tokIdx)
 }
 
 std::unique_ptr<AST::BaseStmt> parseVarAssignment(int tokIdx)
-{    
+{
     updateTokenIdx(tokIdx);
-    
+
     std::string identName = curVal;
     if (match(Token::Id) && match(Token::Op_assignment)) {
         auto rhsExpr = parseExpr(curTokIdx);
@@ -359,7 +359,7 @@ std::unique_ptr<AST::BaseStmt> parseVarAssignment(int tokIdx)
 std::unique_ptr<AST::BaseStmt> parseArrayAssignment(int tokIdx)
 {
     updateTokenIdx(tokIdx);
-    
+
     std::string identName = curVal;
     if (match(Token::Id) && match(Token::SL)) {
         auto idxExpr = parseExpr(curTokIdx);
@@ -402,7 +402,7 @@ bool parseStringOrExprArgs(std::vector<std::unique_ptr<AST::BaseExpr>>& args)
             first = false;
             if (!res)
                 return false;
-            args.push_back(std::move(res));      
+            args.push_back(std::move(res));
         }
     }
 
@@ -425,7 +425,7 @@ std::unique_ptr<AST::BaseStmt> parsePrintStmt(int tokIdx)
     return nullptr;
 }
 
-std::unique_ptr<AST::BaseStmt> parseAbortStmt(int tokIdx) 
+std::unique_ptr<AST::BaseStmt> parseAbortStmt(int tokIdx)
 {
     updateTokenIdx(tokIdx);
 
@@ -455,7 +455,7 @@ std::unique_ptr<AST::BaseStmt> parseIfStmt(int tokIdx)
                 elseStmt = parseStmtBlock(curTokIdx);
             }
             if (body)
-                return std::make_unique<AST::IfStmt>(condExpr, body, elseStmt);     
+                return std::make_unique<AST::IfStmt>(condExpr, body, elseStmt);
         }
     }
 
@@ -474,7 +474,7 @@ std::unique_ptr<AST::BaseStmt> parseWhileStmt(int tokIdx)
                 return std::make_unique<AST::WhileStmt>(condExpr, body);
         }
     }
-   
+
     return nullptr;
 }
 
@@ -511,7 +511,7 @@ std::unique_ptr<AST::BaseStmt> parseReturnStmt(int tokIdx)
 
 std::unique_ptr<AST::StmtBlockStmt> parseStmtBlock();
 
-std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx) 
+std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
 {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseStmt> res = nullptr;
@@ -570,7 +570,7 @@ std::unique_ptr<AST::BaseStmt> parseStmt(int tokIdx)
         if (match(Token::EOL))
             return res;
     }
-   
+
     throw Exception("Parse error near line: " + std::to_string(tokens[curTokIdx].lineno) +
                     " token: " + tokens[curTokIdx].token);
 }
@@ -608,7 +608,7 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
     // consume left parenthesis first
     bool res = match(static_cast<int>(Token::PL));
     bool first = true;
-    while (res && curTok != static_cast<int>(Token::PR)) 
+    while (res && curTok != static_cast<int>(Token::PR))
     {
         // consume a "," if it's not the first iteration
         if (!first && !match(Token::Comma))
@@ -638,14 +638,14 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
     return res;
 }
 
-std::unique_ptr<AST::FunctionDefinition> parseFnDef() 
+std::unique_ptr<AST::FunctionDefinition> parseFnDef()
 {
     std::vector<AST::FnParam> params;
     std::string fnName;
     int fnType;
     if (!isTokenType(fnType = curTok) || !match(curTok))
         throw Exception("Unexpected type found.");
-    
+
     fnName = curVal;
     if (!match(Token::Id))
         throw Exception("Bad function name");
@@ -662,7 +662,7 @@ std::unique_ptr<AST::FunctionDefinition> parseFnDef()
     return std::make_unique<AST::FunctionDefinition>(std::move(proto), std::move(stmt));
 }
 
-void parseProgram(AST::Program& program) 
+void parseProgram(AST::Program& program)
 {
     skipEOLs();
     while (auto fnDef = parseFnDef())
@@ -727,7 +727,7 @@ int main(int argc, char* argv[]) {
         std::cerr << curTok << " " << curVal << std::endl;
         std::cout << "NOK" << std::endl;
         exc.print();
-        return 1;   
+        return 1;
     }
 
     try {
@@ -738,9 +738,9 @@ int main(int argc, char* argv[]) {
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;
         exc.print();
-        return 1;   
+        return 1;
     }
-   
+
     return 0;
 }
 
