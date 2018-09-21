@@ -616,7 +616,7 @@ bool parseFnParams(std::vector<AST::FnParam>& args)
 
         AST::FnParam param;
         res = false;
-        if (isTokenType(curTok))
+        if (isTokenType(curTok) && curTok != static_cast<int>(Token::Type_void))
         {
             param.type = static_cast<Token>(curTok);
             if (getNextTok() == static_cast<int>(Token::Id))
