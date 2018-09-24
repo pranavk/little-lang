@@ -64,7 +64,6 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
     for (auto& var : stmt->decls)
     {
         llvm::AllocaInst* alloca = CreateEntryBlockAlloca(func, var.name, Token::Type_array);
-        _Builder.CreateStore(nullptr, alloca);
         _NamedValues[var.name] = alloca;
     }
 }
