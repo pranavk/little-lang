@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+#include <llvm/IR/Value.h>
+
 #include "consts.hpp"
 #include "visitor.hpp"
 
@@ -12,7 +14,7 @@ namespace AST {
     class BaseStmt {
         public:
         virtual ~BaseStmt() = default;
-
+        llvm::Value* llvmVal;
         virtual void accept(Visitor::BaseVisitor* v)  { };
     };
 
@@ -28,11 +30,11 @@ namespace AST {
         std::string fnName;
         std::vector<FnParam> fnParams;
 
-        FunctionPrototype(int fnType, 
-                          std::string& name, 
+        FunctionPrototype(int fnType,
+                          std::string& name,
                           std::vector<FnParam>& params)
-            : fnType(static_cast<Token>(fnType)), 
-              fnName(name), 
+            : fnType(static_cast<Token>(fnType)),
+              fnName(name),
               fnParams(params) { }
     };
 
@@ -41,10 +43,10 @@ namespace AST {
         std::unique_ptr<FunctionPrototype> proto;
         std::unique_ptr<StmtBlockStmt> body;
 
-        FunctionDefinition(std::unique_ptr<FunctionPrototype> proto, 
+        FunctionDefinition(std::unique_ptr<FunctionPrototype> proto,
                            std::unique_ptr<StmtBlockStmt> body)
             : proto(std::move(proto)), body(std::move(body)) { }
-    
+
         void print();
     };
 
@@ -232,14 +234,14 @@ namespace AST {
         std::unique_ptr<BaseExpr> idxExpr;
         std::unique_ptr<BaseExpr> expr;
         public:
-        ArrayAssignment(std::string& name, 
+        ArrayAssignment(std::string& name,
                         std::unique_ptr<BaseExpr>& idxExpr,
                         std::unique_ptr<BaseExpr>& expr)
                         : name(name)
                         , idxExpr(std::move(idxExpr))
                         , expr(std::move(expr)) { }
 
-        void accept(Visitor::BaseVisitor* v) override { v->visit(this); } 
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
     class VarAssignment : public BaseStmt {
@@ -265,13 +267,13 @@ namespace AST {
     };
 
     class LiteralExpr : public BaseExpr {
-    
+
     };
 
     class StringLiteralExpr : public BaseExpr {
         public:
         std::string val;
-        StringLiteralExpr(std::string& name) 
+        StringLiteralExpr(std::string& name)
             : val(name) { }
         void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
@@ -298,7 +300,7 @@ namespace AST {
         std::unique_ptr<BaseExpr> rightExpr;
         BinopExpr(std::unique_ptr<BaseExpr> leftExpr,
                   Token op,
-                  std::unique_ptr<BaseExpr> rightExpr) 
+                  std::unique_ptr<BaseExpr> rightExpr)
                   : leftExpr(std::move(leftExpr))
                   , op(op)
                   , rightExpr(std::move(rightExpr)) { }
@@ -323,7 +325,7 @@ namespace AST {
         public:
         std::unique_ptr<AST::BaseExpr> idExpr;
         public:
-        SizeofExpr(std::unique_ptr<BaseExpr>& idExpr) 
+        SizeofExpr(std::unique_ptr<BaseExpr>& idExpr)
             : idExpr(std::move(idExpr)) { }
 
         void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
@@ -352,7 +354,7 @@ namespace AST {
         std::string name; // fn name
         std::vector<std::unique_ptr<BaseExpr>> fnArgs;
         public:
-        FnCallExpr(std::string name, 
+        FnCallExpr(std::string name,
                    std::vector<std::unique_ptr<BaseExpr>>& fnArgs1);
 
         void accept(Visitor::BaseVisitor* v) override { v->visit(this); }

@@ -741,6 +741,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    try {
+        std::cout << "Codegen-ing ...";
+        Visitor::CodegenVisitor codegenVisitor;
+        codegenVisitor.visit(&programNode);
+        std::cout << "OK" << std::endl;
+    } catch(Exception& exc) {
+        std::cout << "NOK" << std::endl;
+        exc.print();
+        return 1;
+    }
+
     return 0;
 }
 
