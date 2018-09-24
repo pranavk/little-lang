@@ -118,7 +118,8 @@ void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 {
-
+    stmt->returnExpr->accept(this);
+    _Builder.CreateRet(stmt->returnExpr->llvmVal);
 }
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
@@ -320,7 +321,6 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
             throw Exception("Couldn't codegen for function body");
         }
 
-        _Builder.CreateRet(fnDef->body->llvmVal);
         llvm::verifyFunction(*func);
 
         // print it
