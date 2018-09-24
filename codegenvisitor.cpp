@@ -70,49 +70,48 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
 {
-    for (auto& expr : stmt->args)
-    {
-        expr->accept(this);
-        if (!expr->result->isStringValue() && !expr->result->isIntValue())
-            throw Exception("only string literals and int identifiers allowed in print args", ExceptionType::Type);
-    }
+
 }
 
 void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
 {
+    /*
     stmt->cond->accept(this);
-    if (!stmt->cond->result->isBoolValue())
-        throw Exception("Only bool value allowed as if stmt condition.", ExceptionType::Type);
+    if (!stmt->cond->llvmVal)
+        throw Exception("Can't convert if condition to llvm type");
 
-    stmt->trueStmt->accept(this);
+    llvm::Value* condV = _Builder.CreateICmpEQ(stmt->cond->llvmVal,
+                                               llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 1));
+    llvm::Function* func = _Builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(_TheContext, "then", func);
 
-    if (stmt->falseStmt)
-    {
-        stmt->falseStmt->accept(this);
+    if (stmt->falseStmt) {
+        llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(_TheContext, "else", func);
+        llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(_TheContext, "ifcont");
+    } else {
+        llvm::BasicBlock* contBB = llvm::BasicBlock::Create(_TheContext, "ifcont");
+        _Builder.CreateCondBr(condV, thenBB, contBB);
+        _Builder.SetInsertPoint(thenBB);
+        stmt->trueStmt->accept(this);
+        _Builder.CreateBr(contBB);
+        thenBB = _Builder.GetInsertBlock();
+
+        func->getBasicBlockList().push_back(contBB);
+        _Builder.SetInsertPoint(contBB);
+        llvm::PHINode* pN = _Builder.CreatePHI();
     }
+    */
 }
 
 void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
 {
-    stmt->cond->accept(this);
-    if (!stmt->cond->result->isBoolValue())
-        throw Exception("Only bool value allowed as while stmt condition.", ExceptionType::Type);
 
-    stmt->body->accept(this);
 }
 
 
 void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
 {
-    stmt->ident->accept(this);
-    if (!stmt->ident->result->isIntValue())
-        throw Exception("Id expected in for stmt before colon", ExceptionType::Type);
 
-    stmt->container->accept(this);
-    if (!stmt->container->result->isArrayValue())
-        throw Exception("array expected in for stmt after colon", ExceptionType::Type);
-
-    stmt->body->accept(this);
 }
 
 void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
@@ -123,12 +122,7 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
 {
-    for (auto& expr : stmt->args)
-    {
-        expr->accept(this);
-        if (!expr->result->isStringValue() && !expr->result->isIntValue())
-            throw Exception("only string or int allowed as abort stmt arguments", ExceptionType::Type);
-    }
+
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
@@ -169,100 +163,100 @@ void Visitor::CodegenVisitor::visit(AST::LiteralExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::StringLiteralExpr *expr)
 {
-    expr->result = std::make_unique<AST::StringValue>();
 }
 
 void Visitor::CodegenVisitor::visit(AST::TernaryExpr* expr)
 {
-    expr->condExpr->accept(this);
-    if (!expr->condExpr->result->isBoolValue())
-        throw Exception("first arg to ternary expr should be bool type");
 
-    expr->trueExpr->accept(this);
-    Token trueType = expr->trueExpr->result->getType();
-
-    expr->falseExpr->accept(this);
-    Token falseType = expr->falseExpr->result->getType();
-
-    if (trueType != falseType)
-        throw Exception("ternary: true and false expression should be same type");
-
-    expr->result = AST::createValue(trueType);
 }
 
 void Visitor::CodegenVisitor::visit(AST::BinopExpr* expr)
 {
     const Token op = expr->op;
-
     expr->leftExpr->accept(this);
-    Token lType = expr->leftExpr->result->getType();
-
     expr->rightExpr->accept(this);
-    Token rType = expr->rightExpr->result->getType();
+    llvm::Value* lhsV = expr->leftExpr->llvmVal;
+    llvm::Value* rhsV = expr->rightExpr->llvmVal;
+    if (!lhsV || !rhsV)
+        throw Exception("malformed binary expression");
 
-    if (lType != rType) {
-        throw Exception("binop operands must be same type.");
-    } else if (isAndOr(op)) {
-        if (lType != Token::Type_bool)
-            throw Exception("only bool operands allowed with & and |");
-        expr->result = AST::createValue(Token::Type_bool);
-    } else if (isEqOrNeq(op)) {
-        if (lType != Token::Type_int && lType != Token::Type_bool)
-            throw Exception("only int and bool allowed with == and !=");
-        expr->result = AST::createValue(Token::Type_bool);
-    } else if (isCompOp(op)) {
-        if (lType != Token::Type_int)
-            throw Exception("only int opearnds allowed with comparison operator");
-        expr->result = AST::createValue(Token::Type_bool);
-    } else if (isBinOp(op)) {
-        if (lType != Token::Type_int)
-            throw Exception("only int operands allowed with this operator.");
-        expr->result = AST::createValue(Token::Type_int);
-    } else
-        assert(false && "unhandled operator found");
+    switch(op) {
+        case Token::Op_and:
+            expr->llvmVal = _Builder.CreateAnd(lhsV, rhsV);
+            break;
+        case Token::Op_or:
+            expr->llvmVal = _Builder.CreateOr(lhsV, rhsV);
+            break;
+        case Token::Op_neq:
+            expr->llvmVal = _Builder.CreateICmpNE(lhsV, rhsV);
+            break;
+        case Token::Op_eqeq:
+            expr->llvmVal = _Builder.CreateICmpEQ(lhsV, rhsV);
+            break;
+        case Token::Op_gt:
+            expr->llvmVal = _Builder.CreateICmpSGT(lhsV, rhsV);
+            break;
+        case Token::Op_gte:
+            expr->llvmVal = _Builder.CreateICmpSGE(lhsV, rhsV);
+            break;
+        case Token::Op_lt:
+            expr->llvmVal = _Builder.CreateICmpSLT(lhsV, rhsV);
+            break;
+        case Token::Op_lte:
+            expr->llvmVal = _Builder.CreateICmpSLE(lhsV, rhsV);
+            break;
+        case Token::Op_add:
+            expr->llvmVal = _Builder.CreateAdd(lhsV, rhsV);
+            break;
+        case Token::Op_minus:
+            expr->llvmVal = _Builder.CreateSub(lhsV, rhsV);
+            break;
+        case Token::Op_mult:
+            expr->llvmVal = _Builder.CreateMul(lhsV, rhsV);
+            break;
+        case Token::Op_divide:
+            expr->llvmVal = _Builder.CreateSDiv(lhsV, rhsV);
+            break;
+        case Token::Op_exp:
+            // what's the instruction in llvm for exp?
+        default:
+            throw Exception("codegen: binop not handled");
+    }
 }
 
 void Visitor::CodegenVisitor::visit(AST::UnaryExpr *expr)
 {
     const Token op = expr->type;
     expr->expr->accept(this);
-    if (op == Token::Op_bang) {
-        if (!expr->expr->result->isBoolValue())
-            throw Exception("Bool expected with bang operator");
-    } else if (op == Token::Op_minus) {
-        if (!expr->expr->result->isIntValue())
-            throw Exception("Only int allowed with minus unary op");
-    } else
-        assert("Wrong operator found in unary Expr.");
 
-    expr->result = AST::createValue(expr->expr->result->getType());
+    switch(op) {
+        case Token::Op_bang:
+            expr->llvmVal = _Builder.CreateNot(expr->expr->llvmVal);
+        break;
+        case Token::Op_minus:
+            expr->llvmVal = _Builder.CreateNeg(expr->expr->llvmVal);
+        break;
+        default:
+            throw Exception("codegen: unindentified unary op");
+    }
 }
 
 void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
 {
-    expr->idExpr->accept(this);
-    if (!expr->idExpr->result->isArrayValue())
-        throw Exception("Sizeof argument should be an array value");
-    expr->result = AST::createValue(Token::Type_int);
+
 }
 
 void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 {
-    expr->result = AST::createValue(Token::Type_int);
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
 {
-    expr->expr->accept(this);
-    if (!expr->expr->result->isIntValue())
-        throw Exception("Only int allowed as array expression argument");
-    expr->result = AST::createValue(Token::Type_int);
+
 }
 
 void Visitor::CodegenVisitor::visit(AST::FnCallExpr *expr)
 {
-
-
 
 }
 
