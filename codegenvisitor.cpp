@@ -70,12 +70,20 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
 {
-
+    //FIXME: properly pass the arguments to abort statement
+    llvm::Function* func = nullptr;
+    if (!(func = _TheModule->getFunction("print")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                               false);
+        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "print", _TheModule.get());
+    }
+    stmt->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
 {
-    /*
     stmt->cond->accept(this);
     if (!stmt->cond->llvmVal)
         throw Exception("Can't convert if condition to llvm type");
@@ -100,7 +108,7 @@ void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
         _Builder.SetInsertPoint(contBB);
         llvm::PHINode* pN = _Builder.CreatePHI();
     }
-    */
+
 }
 
 void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
@@ -122,7 +130,16 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
 {
-
+    //FIXME: properly pass the arguments to abort statement
+    llvm::Function* func = nullptr;
+    if (!(func = _TheModule->getFunction("abort")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
+                                                               false);
+        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "abort", _TheModule.get());
+    }
+    stmt->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
@@ -243,11 +260,32 @@ void Visitor::CodegenVisitor::visit(AST::UnaryExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
 {
-
+    //FIXME: properly pass the arguments to abort statement
+    llvm::Function* func = nullptr;
+    if (!(func = _TheModule->getFunction("sizeof")))
+    {
+        std::vector<llvm::Type*> argTypes = { CreateLLVMType(Token::Type_array) };
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                               argTypes,
+                                                               false);
+        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "sizeof", _TheModule.get());
+    }
+    expr->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 {
+     //FIXME: properly pass the arguments to abort statement
+    llvm::Function* func = nullptr;
+    if (!(func = _TheModule->getFunction("input")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                               false);
+        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "input", _TheModule.get());
+    }
+    expr->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
