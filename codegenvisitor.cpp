@@ -125,6 +125,7 @@ void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
     llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(_TheContext, "loop.body", func);
     llvm::BasicBlock* afterLoop = llvm::BasicBlock::Create(_TheContext, "loop.after", func);
 
+    _Builder.CreateBr(loopHdr);
     _Builder.SetInsertPoint(loopHdr);
     _Builder.CreateCondBr(stmt->cond->llvmVal, loopBody, afterLoop);
 
