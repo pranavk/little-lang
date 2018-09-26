@@ -34,11 +34,11 @@ class SymbolInfo
 };
 
 class FnSymbolInfo : public SymbolInfo {
-    AST::FunctionPrototype* _proto; 
+    AST::FunctionPrototype* _proto;
 
     public:
     AST::FunctionPrototype* getFnProto() override { return _proto; }
-    FnSymbolInfo(AST::FunctionPrototype* proto) 
+    FnSymbolInfo(AST::FunctionPrototype* proto)
             : _proto(proto)
             , SymbolInfo(SymbolType::Function) { }
 };
@@ -49,8 +49,8 @@ class SymbolTable
     std::unordered_map<std::string, std::unique_ptr<SymbolInfo>> _table;
 
   public:
-    SymbolTable(std::unique_ptr<SymbolTable>&& parent) 
-                    : _parent(std::move(parent)) { 
+    SymbolTable(std::unique_ptr<SymbolTable>&& parent)
+                    : _parent(std::move(parent)) {
     }
 
     std::unique_ptr<SymbolTable>& getParent() {
@@ -94,7 +94,7 @@ class SymbolTable
             throw Exception("Cannot find function name : " + name);
         assert(it->second->getFnProto());
         return it->second->getFnProto();
-    } 
+    }
 
     AST::FunctionPrototype* getEnclosingFnProto() {
         SymbolTable* symTab = this;

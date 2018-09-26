@@ -26,7 +26,7 @@ llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
             return llvm::Type::getVoidTy(_TheContext);
         break;
         case Token::Type_array:
-            return llvm::StructType::get(_TheContext, {CreateLLVMType(Token::Type_int),
+            return llvm::StructType::get(_TheContext, {llvm::Type::getInt64Ty(_TheContext),
                                                 llvm::PointerType::get(CreateLLVMType(Token::Type_int), 0)});
         default:
             return nullptr;
@@ -154,7 +154,40 @@ void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
 {
+    llvm::Function* func = _Builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* loopHdr = llvm::BasicBlock::Create(_TheContext, "forloop.header", func);
+    llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(_TheContext, "forloop.body", func);
+    llvm::BasicBlock* afterLoop = llvm::BasicBlock::Create(_TheContext, "forloop.after", func);
 
+    AST::IdExpr* idExpr = dynamic_cast<AST::IdExpr*>(stmt->ident.get());
+    AST::IdExpr* contExpr = dynamic_cast<AST::IdExpr*>(stmt->container.get());
+    if (!idExpr || !contExpr)
+        throw Exception("For stmt doesn't contain any valid id or container expr.");
+
+    llvm::Value* arrayAlloca = _NamedValues[contExpr->name];
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    llvm::Value* data = _Builder.CreateLoad(dataPtr);
+    llvm::Value* size = _Builder.CreateLoad(sizePtr);
+    llvm::Value* counterAlloca = _Builder.CreateAlloca(llvm::Type::getInt64Ty(_TheContext));
+    _Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), counterAlloca);
+    _Builder.CreateBr(loopHdr);
+
+     // move to the loop header BB
+    _Builder.SetInsertPoint(loopHdr);
+    llvm::Value* counterV = _Builder.CreateLoad(counterAlloca);
+    llvm::Value* condV = _Builder.CreateICmpSLT(counterV, size);
+    _Builder.CreateCondBr(condV, loopBody, afterLoop);
+
+    _Builder.SetInsertPoint(loopBody);
+    llvm::Value* elePtr = _Builder.CreateGEP(data, counterV);
+    _Builder.CreateStore(_Builder.CreateLoad(elePtr), _NamedValues[idExpr->name]);
+    stmt->body->accept(this);
+    counterV = _Builder.CreateAdd(counterV, llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 1));
+    _Builder.CreateStore(counterV, counterAlloca);
+    _Builder.CreateBr(loopHdr);
+
+    _Builder.SetInsertPoint(afterLoop);
 }
 
 void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
@@ -183,7 +216,7 @@ void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
     llvm::Value* arrayAlloca = _NamedValues[stmt->name];
     llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
     llvm::Value* data = _Builder.CreateLoad(dataPtr);
-    llvm::Value* elePtr = _Builder.CreateGEP(data, llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 2));
+    llvm::Value* elePtr = _Builder.CreateGEP(data, stmt->idxExpr->llvmVal);
     stmt->expr->accept(this);
     _Builder.CreateStore(stmt->expr->llvmVal, elePtr);
 }
