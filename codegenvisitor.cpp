@@ -357,7 +357,7 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
         }
 
         llvm::FunctionType* ft = llvm::FunctionType::get(CreateLLVMType(fnDef->proto->fnType), argTypes, false);
-        func = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, fnDef->proto->fnName, _TheModule.get());
+        func = llvm::Function::Create(ft, llvm::Function::PrivateLinkage, fnDef->proto->fnName, _TheModule.get());
 
         // set names for func params
         unsigned idx = 0;
@@ -365,6 +365,9 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
             arg.setName(fnDef->proto->fnParams[idx++].name);
         }
     }
+
+    // set 'main' linkage to external
+    dynamic_cast<llvm::GlobalValue*>(_TheModule->getFunction("main"))->setLinkage(llvm::Function::ExternalLinkage);
 
     // iterate over individual funcs
     for (auto& fnDef : program->fnDefinitions)
