@@ -744,6 +744,8 @@ int main(int argc, char* argv[]) {
     try {
         std::cout << "Codegen-ing ...";
         Visitor::CodegenVisitor codegenVisitor;
+        codegenVisitor.getModule()->setModuleIdentifier(filename);
+        codegenVisitor.getModule()->setSourceFileName(filename);
         codegenVisitor.visit(&programNode);
         std::cout << "OK" << std::endl;
     } catch(Exception& exc) {

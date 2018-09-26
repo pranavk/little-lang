@@ -118,15 +118,15 @@ void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
 {
-    stmt->cond->accept(this);
-
     llvm::Function* func = _Builder.GetInsertBlock()->getParent();
     llvm::BasicBlock* loopHdr = llvm::BasicBlock::Create(_TheContext, "loop.header", func);
     llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(_TheContext, "loop.body", func);
     llvm::BasicBlock* afterLoop = llvm::BasicBlock::Create(_TheContext, "loop.after", func);
 
     _Builder.CreateBr(loopHdr);
+
     _Builder.SetInsertPoint(loopHdr);
+    stmt->cond->accept(this);
     _Builder.CreateCondBr(stmt->cond->llvmVal, loopBody, afterLoop);
 
     _Builder.SetInsertPoint(loopBody);
@@ -357,7 +357,7 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
         }
 
         llvm::FunctionType* ft = llvm::FunctionType::get(CreateLLVMType(fnDef->proto->fnType), argTypes, false);
-        func = llvm::Function::Create(ft, llvm::Function::PrivateLinkage, fnDef->proto->fnName, _TheModule.get());
+        func = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, fnDef->proto->fnName, _TheModule.get());
 
         // set names for func params
         unsigned idx = 0;
@@ -393,10 +393,10 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
             throw Exception("Couldn't codegen for function body");
         }
 
-        llvm::verifyFunction(*func);
+        llvm::verifyFunction(*func, &llvm::errs());
     }
 
-    llvm::verifyModule(*_TheModule.get());
+    llvm::verifyModule(*_TheModule.get(), &llvm::errs());
     // print it
-    llvm::errs() << *_TheModule;
+    llvm::outs() << *_TheModule;
 }

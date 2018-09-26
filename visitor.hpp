@@ -202,5 +202,7 @@ namespace Visitor {
         static llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Function* func,
                                                         const std::string& varName,
                                                         const Token type);
+
+        static llvm::Module* getModule() { return _TheModule.get(); }
     };
 }
