@@ -202,7 +202,10 @@ void Visitor::CodegenVisitor::visit(AST::StringLiteralExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::TernaryExpr* expr)
 {
-
+    expr->condExpr->accept(this);
+    expr->trueExpr->accept(this);
+    expr->falseExpr->accept(this);
+    expr->llvmVal = _Builder.CreateSelect(expr->condExpr->llvmVal, expr->trueExpr->llvmVal, expr->falseExpr->llvmVal);
 }
 
 void Visitor::CodegenVisitor::visit(AST::BinopExpr* expr)
