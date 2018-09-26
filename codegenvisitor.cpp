@@ -118,9 +118,22 @@ void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
 {
+    stmt->cond->accept(this);
 
+    llvm::Function* func = _Builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* loopHdr = llvm::BasicBlock::Create(_TheContext, "loop.header", func);
+    llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(_TheContext, "loop.body", func);
+    llvm::BasicBlock* afterLoop = llvm::BasicBlock::Create(_TheContext, "loop.after", func);
+
+    _Builder.SetInsertPoint(loopHdr);
+    _Builder.CreateCondBr(stmt->cond->llvmVal, loopBody, afterLoop);
+
+    _Builder.SetInsertPoint(loopBody);
+    stmt->body->accept(this);
+    _Builder.CreateBr(loopHdr);
+
+    _Builder.SetInsertPoint(afterLoop);
 }
-
 
 void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
 {
