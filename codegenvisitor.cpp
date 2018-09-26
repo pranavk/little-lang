@@ -336,7 +336,14 @@ void Visitor::CodegenVisitor::visit(AST::FnCallExpr *expr)
     if(!(func = _TheModule->getFunction(expr->name)))
         throw Exception("Cannot find func : " + expr->name);
 
-    expr->llvmVal = _Builder.CreateCall(func);
+    std::vector<llvm::Value*> llvmArgs;
+    // codegen all function args
+    for (auto& arg : expr->fnArgs) {
+        arg->accept(this);
+        llvmArgs.push_back(arg->llvmVal);
+    }
+
+    expr->llvmVal = _Builder.CreateCall(func, llvmArgs);
 }
 
 void Visitor::CodegenVisitor::visit(AST::Program* program)
@@ -400,6 +407,4 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
     }
 
     llvm::verifyModule(*_TheModule.get(), &llvm::errs());
-    // print it
-    llvm::outs() << *_TheModule;
 }

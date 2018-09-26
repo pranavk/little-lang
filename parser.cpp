@@ -691,6 +691,7 @@ int main(int argc, char* argv[]) {
         std::cout << argv[0] << " OPTIONS FILENAME" << std::endl;
         std::cout << "OPTIONS" << std::endl;
         std::cout << "\t--print-ast\tPrints the AST of the parsed program" << std::endl;
+        std::cout << "\t--print-ir\tPrints the LLVM IR of the program" << std::endl;
         std::cout << "\t--help\t\tPrints this help" << std::endl;
         return 0;
     }
@@ -718,11 +719,11 @@ int main(int argc, char* argv[]) {
     try {
         std::cout << "* Parsing file: " << filename << " ... ";
         parseProgram(programNode);
+        std::cout << "OK" << std::endl;
         if (isOn("print-ast")) {
             Visitor::PrintASTVisitor printVisitor;
             printVisitor.visit(&programNode);
         }
-        std::cout << "OK" << std::endl;
     } catch(Exception& exc) {
         std::cerr << curTok << " " << curVal << std::endl;
         std::cout << "NOK" << std::endl;
@@ -742,12 +743,15 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        std::cout << "Codegen-ing ...";
+        std::cout << "  Codegen-ing ...";
         Visitor::CodegenVisitor codegenVisitor;
         codegenVisitor.getModule()->setModuleIdentifier(filename);
         codegenVisitor.getModule()->setSourceFileName(filename);
         codegenVisitor.visit(&programNode);
         std::cout << "OK" << std::endl;
+        if (isOn("print-ir")) {
+            codegenVisitor.getModule()->print(llvm::outs(), nullptr);
+        }
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;
         exc.print();
