@@ -70,7 +70,7 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
 {
-    //FIXME: properly pass the arguments to abort statement
+    //FIXME: properly pass the arguments to print statement
     llvm::Function* func = nullptr;
     if (!(func = _TheModule->getFunction("print")))
     {
@@ -256,8 +256,23 @@ void Visitor::CodegenVisitor::visit(AST::BinopExpr* expr)
         case Token::Op_divide:
             expr->llvmVal = _Builder.CreateSDiv(lhsV, rhsV);
             break;
+        case Token::Op_mod:
+            expr->llvmVal = _Builder.CreateSRem(lhsV, rhsV);
+            break;
         case Token::Op_exp:
-            // what's the instruction in llvm for exp?
+        {
+            llvm::Function *func = nullptr;
+            if (!(func = _TheModule->getFunction("pow")))
+            {
+                llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                                       {CreateLLVMType(Token::Type_int), CreateLLVMType(Token::Type_int)},
+                                                                       false);
+                func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                              "pow", _TheModule.get());
+            }
+            expr->llvmVal = _Builder.CreateCall(func, {lhsV, rhsV});
+        }
+        break;
         default:
             throw Exception("codegen: binop not handled");
     }
@@ -286,9 +301,9 @@ void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
     llvm::Function* func = nullptr;
     if (!(func = _TheModule->getFunction("sizeof")))
     {
-        std::vector<llvm::Type*> argTypes = { CreateLLVMType(Token::Type_array) };
+     //   std::vector<llvm::Type*> argTypes = { CreateLLVMType(Token::Type_array) };
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
-                                                               argTypes,
+                            //                                   argTypes,
                                                                false);
         func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                                       "sizeof", _TheModule.get());
@@ -379,8 +394,9 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
         }
 
         llvm::verifyFunction(*func);
-
-        // print it
-        llvm::errs() << *_TheModule;
     }
+
+    llvm::verifyModule(*_TheModule.get());
+    // print it
+    llvm::errs() << *_TheModule;
 }
