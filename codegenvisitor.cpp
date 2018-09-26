@@ -88,27 +88,32 @@ void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
     if (!stmt->cond->llvmVal)
         throw Exception("Can't convert if condition to llvm type");
 
-    llvm::Value* condV = _Builder.CreateICmpEQ(stmt->cond->llvmVal,
-                                               llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 1));
     llvm::Function* func = _Builder.GetInsertBlock()->getParent();
     llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(_TheContext, "then", func);
+    llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(_TheContext, "else");
+    llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(_TheContext, "ifcont");
 
     if (stmt->falseStmt) {
-        llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(_TheContext, "else", func);
-        llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(_TheContext, "ifcont");
+        _Builder.CreateCondBr(stmt->cond->llvmVal, thenBB, elseBB);
     } else {
-        llvm::BasicBlock* contBB = llvm::BasicBlock::Create(_TheContext, "ifcont");
-        _Builder.CreateCondBr(condV, thenBB, contBB);
-        _Builder.SetInsertPoint(thenBB);
-        stmt->trueStmt->accept(this);
-        _Builder.CreateBr(contBB);
-        thenBB = _Builder.GetInsertBlock();
-
-        func->getBasicBlockList().push_back(contBB);
-        _Builder.SetInsertPoint(contBB);
-        llvm::PHINode* pN = _Builder.CreatePHI();
+        _Builder.CreateCondBr(stmt->cond->llvmVal, thenBB, mergeBB);
     }
 
+    _Builder.SetInsertPoint(thenBB);
+    stmt->trueStmt->accept(this);
+    _Builder.CreateBr(mergeBB);
+    thenBB = _Builder.GetInsertBlock();
+
+    if (stmt->falseStmt) {
+        func->getBasicBlockList().push_back(elseBB);
+        _Builder.SetInsertPoint(elseBB);
+        stmt->falseStmt->accept(this);
+        _Builder.CreateBr(mergeBB);
+        elseBB = _Builder.GetInsertBlock();
+    }
+
+    func->getBasicBlockList().push_back(mergeBB);
+    _Builder.SetInsertPoint(mergeBB);
 }
 
 void Visitor::CodegenVisitor::visit(AST::WhileStmt *stmt)
@@ -170,7 +175,7 @@ void Visitor::CodegenVisitor::visit(AST::IdExpr *expr)
 {
     if (!_NamedValues[expr->name])
         throw Exception("No such variable found");
-    expr->llvmVal = _NamedValues[expr->name];
+    expr->llvmVal = _Builder.CreateLoad(_NamedValues[expr->name]);
 }
 
 void Visitor::CodegenVisitor::visit(AST::LiteralExpr *expr)
