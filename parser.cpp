@@ -234,9 +234,8 @@ std::unique_ptr<AST::BaseExpr> parseInputExpr(int tokIdx) {
 
 std::unique_ptr<AST::BaseExpr> parseArrayExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
-
+    std::string name = curVal;
     if (match(Token::Id)) {
-        std::string name = curVal;
         if (match(Token::SL)) {
             auto expr = parseExpr(curTokIdx);
             if (expr && match(Token::SR))

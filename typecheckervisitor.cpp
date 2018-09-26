@@ -114,6 +114,8 @@ void Visitor::TypecheckerVisitor::visit(AST::ArrayAssignment *stmt)
     SymbolInfo* info = nullptr;
     if (!(info = _symTab->hasSymbol(stmt->name)))
         throw Exception("Assigning element to an undeclared array.");
+    if (info->_type != SymbolType::Array)
+        throw Exception("Only arrays can be indexed using [] operator");
     stmt->idxExpr->accept(this);
     if (!stmt->idxExpr->result->isIntValue())
         throw Exception("only int allowed as array index");

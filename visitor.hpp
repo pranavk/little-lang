@@ -203,6 +203,9 @@ namespace Visitor {
                                                         const std::string& varName,
                                                         const Token type);
 
+        static llvm::AllocaInst* CreateAllocaArray(llvm::Function* func,
+                                                             const std::string& varName,
+                                                             llvm::Value* arrSize);
         static llvm::Module* getModule() { return _TheModule.get(); }
     };
 }

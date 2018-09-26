@@ -26,7 +26,8 @@ llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
             return llvm::Type::getVoidTy(_TheContext);
         break;
         case Token::Type_array:
-            return llvm::ArrayType::get(llvm::Type::getInt64Ty(_TheContext), 1000);
+            return llvm::StructType::get(_TheContext, {CreateLLVMType(Token::Type_int),
+                                                llvm::PointerType::get(CreateLLVMType(Token::Type_int), 0)});
         default:
             return nullptr;
     }
@@ -38,6 +39,20 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateEntryBlockAlloca(llvm::Function
 {
     llvm::IRBuilder<> tmpB(&func->getEntryBlock(), func->getEntryBlock().begin());
     return tmpB.CreateAlloca(CreateLLVMType(type), 0, varName.c_str());
+}
+
+llvm::AllocaInst* Visitor::CodegenVisitor::CreateAllocaArray(llvm::Function* func,
+                                                             const std::string& varName,
+                                                             llvm::Value* arrSize)
+{
+
+    llvm::Value* dataAlloca = _Builder.CreateAlloca(CreateLLVMType(Token::Type_int), arrSize, varName.c_str());
+    llvm::AllocaInst* arrayAlloca = _Builder.CreateAlloca(CreateLLVMType(Token::Type_array));
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    _Builder.CreateStore(arrSize, sizePtr);
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    _Builder.CreateStore(dataAlloca, dataPtr);
+    return arrayAlloca;
 }
 
 void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
@@ -63,7 +78,8 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
     llvm::Function* func = _Builder.GetInsertBlock()->getParent();
     for (auto& var : stmt->decls)
     {
-        llvm::AllocaInst* alloca = CreateEntryBlockAlloca(func, var.name, Token::Type_array);
+        var.expr->accept(this);
+        llvm::AllocaInst* alloca = CreateAllocaArray(func, var.name, var.expr->llvmVal);
         _NamedValues[var.name] = alloca;
     }
 }
@@ -163,7 +179,13 @@ void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
 {
-
+    stmt->idxExpr->accept(this);
+    llvm::Value* arrayAlloca = _NamedValues[stmt->name];
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    llvm::Value* data = _Builder.CreateLoad(dataPtr);
+    llvm::Value* elePtr = _Builder.CreateGEP(data, llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 2));
+    stmt->expr->accept(this);
+    _Builder.CreateStore(stmt->expr->llvmVal, elePtr);
 }
 
 void Visitor::CodegenVisitor::visit(AST::VarAssignment *stmt)
@@ -327,7 +349,12 @@ void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
 {
-
+    expr->expr->accept(this);
+    llvm::Value* arrayAlloca = _NamedValues[expr->name];
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    llvm::Value* data = _Builder.CreateLoad(dataPtr);
+    llvm::Value* elePtr = _Builder.CreateGEP(data, expr->expr->llvmVal);
+    expr->llvmVal = _Builder.CreateLoad(elePtr);
 }
 
 void Visitor::CodegenVisitor::visit(AST::FnCallExpr *expr)
