@@ -5,6 +5,9 @@
 #include <cstring>
 #include <cassert>
 
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/FileSystem.h>
+
 #include "consts.hpp"
 #include "baseast.hpp"
 #include "visitor.hpp"
@@ -24,7 +27,29 @@ std::string curVal;
 
 static std::set<std::string> args;
 bool isOn(const std::string& opt) {
-    return args.find(opt) != args.end();
+    // only compare the part before "="
+    for (auto& arg : args) {
+        if (opt == arg.substr(0, arg.find("=")))
+            return true;
+    }
+    return false;
+}
+
+std::string getOptionValue(const std::string& key) {
+    for (auto& arg : args) {
+        if (arg.find("=") != std::string::npos && key == arg.substr(0, arg.find("=")))
+            return arg.substr(arg.find("=") + 1);
+    }
+    return ""; // no value set in option
+}
+
+void printHelp(const std::string& commandName)
+{
+    std::cout << commandName << " OPTIONS FILENAME" << std::endl;
+    std::cout << "OPTIONS" << std::endl;
+    std::cout << "\t--print-ast\t\tPrints the AST of the parsed program" << std::endl;
+    std::cout << "\t--print-ir=[FILENAME]\tPrints the LLVM IR of the program. If FILENAME is specified, it's written there instead of stdout." << std::endl;
+    std::cout << "\t--help\t\t\tPrints this help" << std::endl;
 }
 
 int getNextTok()
@@ -688,15 +713,12 @@ int main(int argc, char* argv[]) {
     }
 
     if (isOn("help")) {
-        std::cout << argv[0] << " OPTIONS FILENAME" << std::endl;
-        std::cout << "OPTIONS" << std::endl;
-        std::cout << "\t--print-ast\tPrints the AST of the parsed program" << std::endl;
-        std::cout << "\t--print-ir\tPrints the LLVM IR of the program" << std::endl;
-        std::cout << "\t--help\t\tPrints this help" << std::endl;
+        printHelp(argv[0]);
         return 0;
     }
     if (filename.empty()) {
         std::cerr << "error: provide file name as argument" << std::endl;
+        printHelp(argv[0]);
         return 1;
     }
 
@@ -704,6 +726,10 @@ int main(int argc, char* argv[]) {
     FILE* fp = nullptr;
     if (!filename.empty())
         fp = fopen(filename.c_str(), "r");
+    if (!fp) {
+        std::cerr << "Error opening file " << filename << std::endl;
+        return 1;
+    }
     yyrestart(fp);
 
     int token = -1;
@@ -750,7 +776,18 @@ int main(int argc, char* argv[]) {
         codegenVisitor.visit(&programNode);
         std::cout << "OK" << std::endl;
         if (isOn("print-ir")) {
-            codegenVisitor.getModule()->print(llvm::outs(), nullptr);
+            llvm::raw_ostream& outHandle = llvm::outs();
+            std::string optVal = getOptionValue("print-ir");
+            if (!optVal.empty()) {
+                std::error_code errc;
+                llvm::raw_fd_ostream outfile(optVal, errc, llvm::sys::fs::OpenFlags::F_None);
+                codegenVisitor.getModule()->print(outfile, nullptr);
+                outfile.close();
+                if (errc)
+                    throw Exception("Error opening file to write LLVM IR.");
+            } else {
+                codegenVisitor.getModule()->print(outHandle, nullptr);
+            }
         }
     } catch(Exception& exc) {
         std::cout << "NOK" << std::endl;
