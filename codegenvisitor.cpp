@@ -17,7 +17,7 @@ llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
 {
     switch(type) {
         case Token::Type_int:
-            return llvm::Type::getInt128Ty(_TheContext);
+            return llvm::Type::getInt64Ty(_TheContext);
         break;
         case Token::Type_bool:
             return llvm::Type::getInt1Ty(_TheContext);
@@ -26,7 +26,7 @@ llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
             return llvm::Type::getVoidTy(_TheContext);
         break;
         case Token::Type_array:
-            return llvm::ArrayType::get(llvm::Type::getInt128Ty(_TheContext), 1000);
+            return llvm::ArrayType::get(llvm::Type::getInt64Ty(_TheContext), 1000);
         default:
             return nullptr;
     }
@@ -182,7 +182,7 @@ void Visitor::CodegenVisitor::visit(AST::BaseExpr* expr)
 
 void Visitor::CodegenVisitor::visit(AST::NumExpr *expr)
 {
-    expr->llvmVal = llvm::ConstantInt::get(llvm::Type::getInt128Ty(_TheContext), expr->val);
+    expr->llvmVal = llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), expr->val);
 }
 
 void Visitor::CodegenVisitor::visit(AST::IdExpr *expr)
