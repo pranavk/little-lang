@@ -316,7 +316,11 @@ void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::FnCallExpr *expr)
 {
+    llvm::Function* func = nullptr;
+    if(!(func = _TheModule->getFunction(expr->name)))
+        throw Exception("Cannot find func : " + expr->name);
 
+    expr->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::Program* program)
