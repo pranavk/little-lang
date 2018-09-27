@@ -265,7 +265,7 @@ std::unique_ptr<AST::BaseExpr> parseBinopExpr(int tokIdx) {
 
     if (match(Token::PL)) {
         auto lExpr = parseExpr(curTokIdx);
-        if (isBinOp(curTok)) {
+        if (lExpr && isBinOp(curTok)) {
             Token op = static_cast<Token>(curTok);
             if (match(curTok)) { // consume binop
                 auto rExpr = parseExpr(curTokIdx);
