@@ -60,6 +60,9 @@ void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
     for (auto &stmt : stmtBlock->stmt_list)
     {
         stmt->accept(this);
+        if (auto retStmt = dynamic_cast<AST::ReturnStmt*>(stmt.get())) {
+            break; // no need to process other stmts now
+        }
     }
 }
 
@@ -117,14 +120,16 @@ void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
 
     _Builder.SetInsertPoint(thenBB);
     stmt->trueStmt->accept(this);
-    _Builder.CreateBr(mergeBB);
+    if (!_Builder.GetInsertBlock()->getTerminator())
+        _Builder.CreateBr(mergeBB);
     thenBB = _Builder.GetInsertBlock();
 
     if (stmt->falseStmt) {
         func->getBasicBlockList().push_back(elseBB);
         _Builder.SetInsertPoint(elseBB);
         stmt->falseStmt->accept(this);
-        _Builder.CreateBr(mergeBB);
+        if (!_Builder.GetInsertBlock()->getTerminator())
+            _Builder.CreateBr(mergeBB);
         elseBB = _Builder.GetInsertBlock();
     }
 
@@ -212,6 +217,21 @@ void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
                                       "abort", _TheModule.get());
     }
     stmt->llvmVal = _Builder.CreateCall(func);
+
+    // below we return a dummy value; it's unreachable anyways but llvm requires each BB to be
+    // terminated with a terminator instruction. "unreachable" would have been best in this
+    // but it doesn't work for me.
+    /*
+    func = _Builder.GetInsertBlock()->getParent();
+    auto retType = func->getReturnType();
+    if (retType->isIntegerTy() && retType->getIntegerBitWidth() == 1)
+        _Builder.CreateRet(llvm::ConstantInt::get(CreateLLVMType(Token::Type_bool), false));
+    else if (retType->isIntegerTy())
+        _Builder.CreateRet(llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 1));
+    else
+        _Builder.CreateRetVoid();
+    */
+    _Builder.CreateUnreachable();
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
@@ -450,6 +470,7 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
     // set 'main' linkage to external
     dynamic_cast<llvm::GlobalValue*>(_TheModule->getFunction("main"))->setLinkage(llvm::Function::ExternalLinkage);
 
+    bool err = false;
     // iterate over individual funcs
     for (auto& fnDef : program->fnDefinitions)
     {
@@ -472,13 +493,17 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
         }
 
         fnDef->body->accept(this);
-        if (!fnDef->body->llvmVal) {
-            func->eraseFromParent();
-            throw Exception("Couldn't codegen for function body");
-        }
 
-        llvm::verifyFunction(*func, &llvm::errs());
+        // for non-void functions, typechecker should have already rejected programs without
+        // return/abort statements at end of the function.
+        if (!_Builder.GetInsertBlock()->getTerminator() && fnDef->proto->fnType == Token::Type_void) {
+            _Builder.CreateRetVoid();
+        }
+        err = llvm::verifyFunction(*func, &llvm::errs());
     }
 
-    llvm::verifyModule(*_TheModule.get(), &llvm::errs());
+    err = llvm::verifyModule(*_TheModule.get(), &llvm::errs()) || err;
+    if (err) {
+        throw Exception("LLVM IR verification failed.");
+    }
 }

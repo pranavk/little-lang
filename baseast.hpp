@@ -14,7 +14,7 @@ namespace AST {
     class BaseStmt {
         public:
         virtual ~BaseStmt() = default;
-        llvm::Value* llvmVal;
+        llvm::Value* llvmVal = nullptr;
         virtual void accept(Visitor::BaseVisitor* v)  { };
     };
 
