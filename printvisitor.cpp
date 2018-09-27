@@ -5,7 +5,7 @@
 
 void Visitor::PrintASTVisitor::print(const std::vector<std::string>& vec)
 {
-    for (int i = 0; i < _depth; i++) 
+    for (int i = 0; i < _depth; i++)
     {
         std::cout << "\t";
     }
@@ -30,9 +30,9 @@ void Visitor::PrintASTVisitor::visit(AST::VarDeclStmt *stmt)
 {
     print({"var declare"});
     _depth++;
-    for (auto& var : stmt->decls) 
+    for (auto& var : stmt->decls)
     {
-        print({var.name, ":", 
+        print({var.name, ":",
                std::to_string(static_cast<int>(var.type))});
     }
     _depth--;
@@ -42,7 +42,7 @@ void Visitor::PrintASTVisitor::visit(AST::ArrayDeclStmt *stmt)
 {
     print({"array declare"});
     _depth++;
-    for (auto& var : stmt->decls) 
+    for (auto& var : stmt->decls)
     {
         print({var.name});
         _depth++;
@@ -56,7 +56,7 @@ void Visitor::PrintASTVisitor::visit(AST::PrintStmt *stmt)
 {
     print({"print: "});
     _depth++;
-    for (auto& expr : stmt->args) 
+    for (auto& expr : stmt->args)
     {
         expr->accept(this);
     }
@@ -104,7 +104,7 @@ void Visitor::PrintASTVisitor::visit(AST::ForStmt *stmt)
 {
     print({"for (ident : container) body"});
     print({"ident:"});
-    
+
     _depth++;
     stmt->ident->accept(this);
     _depth--;
@@ -137,7 +137,7 @@ void Visitor::PrintASTVisitor::visit(AST::AbortStmt *stmt)
 {
     print({"abort: "});
     _depth++;
-    for (auto& expr : stmt->args) 
+    for (auto& expr : stmt->args)
     {
         expr->accept(this);
     }
@@ -180,7 +180,17 @@ void Visitor::PrintASTVisitor::visit(AST::BaseExpr* expr)
 
 void Visitor::PrintASTVisitor::visit(AST::NumExpr *expr)
 {
-    print({std::to_string(expr->val)}); 
+    print({std::to_string(expr->val)});
+}
+
+void Visitor::PrintASTVisitor::visit(AST::TrueExpr *expr)
+{
+    print({"true"});
+}
+
+void Visitor::PrintASTVisitor::visit(AST::FalseExpr *expr)
+{
+    print({"false"});
 }
 
 void Visitor::PrintASTVisitor::visit(AST::IdExpr *expr)

@@ -34,6 +34,8 @@ namespace AST {
     class ArrayAssignment;
     class VarAssignment;
 
+    class TrueExpr;
+    class FalseExpr;
     class NumExpr;
     class IdExpr;
     class LiteralExpr;
@@ -64,6 +66,8 @@ namespace Visitor {
         virtual void visit(AST::VarAssignment*) = 0;
 
         virtual void visit(AST::BaseExpr*) = 0;
+        virtual void visit(AST::TrueExpr*) = 0;
+        virtual void visit(AST::FalseExpr*) = 0;
         virtual void visit(AST::NumExpr*) = 0;
         virtual void visit(AST::IdExpr*) = 0;
         virtual void visit(AST::LiteralExpr*) = 0;
@@ -99,6 +103,8 @@ namespace Visitor {
         virtual void visit(AST::VarAssignment*) override;
 
         virtual void visit(AST::BaseExpr*) override;
+        virtual void visit(AST::TrueExpr*) override;
+        virtual void visit(AST::FalseExpr*) override;
         virtual void visit(AST::NumExpr*) override;
         virtual void visit(AST::IdExpr*) override;
         virtual void visit(AST::LiteralExpr*) override;
@@ -132,6 +138,8 @@ namespace Visitor {
         virtual void visit(AST::VarAssignment*) override;
 
         virtual void visit(AST::BaseExpr*) override;
+        virtual void visit(AST::TrueExpr*) override;
+        virtual void visit(AST::FalseExpr*) override;
         virtual void visit(AST::NumExpr*) override;
         virtual void visit(AST::IdExpr*) override;
         virtual void visit(AST::LiteralExpr*) override;
@@ -183,6 +191,8 @@ namespace Visitor {
         virtual void visit(AST::VarAssignment*) override;
 
         virtual void visit(AST::BaseExpr*) override;
+        virtual void visit(AST::TrueExpr*) override;
+        virtual void visit(AST::FalseExpr*) override;
         virtual void visit(AST::NumExpr*) override;
         virtual void visit(AST::IdExpr*) override;
         virtual void visit(AST::LiteralExpr*) override;

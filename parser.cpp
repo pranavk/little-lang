@@ -146,7 +146,7 @@ std::unique_ptr<AST::BaseExpr> parseTrueExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     if (match(Token::Literal_true)) {
-        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>());
+        res = std::make_unique<AST::TrueExpr>();
         return res;
     }
 
@@ -157,7 +157,7 @@ std::unique_ptr<AST::BaseExpr> parseFalseExpr(int tokIdx) {
     updateTokenIdx(tokIdx);
     std::unique_ptr<AST::BaseExpr> res = nullptr;
     if (match(Token::Literal_false)) {
-        res = std::make_unique<AST::BaseExpr>(std::make_unique<AST::BoolValue>());
+        res = std::make_unique<AST::FalseExpr>();
         return res;
     }
 

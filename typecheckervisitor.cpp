@@ -141,6 +141,16 @@ void Visitor::TypecheckerVisitor::visit(AST::BaseExpr* expr)
 
 }
 
+void Visitor::TypecheckerVisitor::visit(AST::TrueExpr *expr)
+{
+    expr->result = AST::createValue(Token::Type_bool);
+}
+
+void Visitor::TypecheckerVisitor::visit(AST::FalseExpr *expr)
+{
+    expr->result = AST::createValue(Token::Type_bool);
+}
+
 void Visitor::TypecheckerVisitor::visit(AST::NumExpr *expr)
 {
     expr->result = AST::createValue(Token::Type_int);

@@ -192,8 +192,12 @@ void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 {
-    stmt->returnExpr->accept(this);
-    _Builder.CreateRet(stmt->returnExpr->llvmVal);
+    if (stmt->returnExpr) {
+        stmt->returnExpr->accept(this);
+        _Builder.CreateRet(stmt->returnExpr->llvmVal);
+    } else {
+        _Builder.CreateRetVoid();
+    }
 }
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
@@ -233,6 +237,16 @@ void Visitor::CodegenVisitor::visit(AST::VarAssignment *stmt)
 void Visitor::CodegenVisitor::visit(AST::BaseExpr* expr)
 {
 
+}
+
+void Visitor::CodegenVisitor::visit(AST::TrueExpr *expr)
+{
+    expr->llvmVal = llvm::ConstantInt::get(llvm::Type::getInt1Ty(_TheContext), 1);
+}
+
+void Visitor::CodegenVisitor::visit(AST::FalseExpr *expr)
+{
+    expr->llvmVal = llvm::ConstantInt::get(llvm::Type::getInt1Ty(_TheContext), 0);
 }
 
 void Visitor::CodegenVisitor::visit(AST::NumExpr *expr)

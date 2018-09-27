@@ -266,6 +266,16 @@ namespace AST {
         void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
     };
 
+    class TrueExpr : public BaseExpr {
+        public:
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
+    };
+
+    class FalseExpr : public BaseExpr {
+        public:
+        void accept(Visitor::BaseVisitor* v) override { v->visit(this); }
+    };
+
     class LiteralExpr : public BaseExpr {
 
     };
