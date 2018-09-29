@@ -135,13 +135,19 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
 {
+    bool foundsth = false;
     for (auto& arg : stmt->args) {
         arg->accept(this);
+        foundsth = true;
         if (auto strExpr = dynamic_cast<AST::StringLiteralExpr*>(arg.get())) {
             _Builder.CreateCall(_TheModule->getFunction("_l_print_string"), {strExpr->llvmVal});
         } else {
             _Builder.CreateCall(_TheModule->getFunction("_l_print_int"), {arg->llvmVal});
         }
+    }
+
+    if (foundsth) {
+        _Builder.CreateCall(_TheModule->getFunction("_l_print_string"), {_Builder.CreateGlobalStringPtr("\n")});
     }
 }
 
