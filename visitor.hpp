@@ -176,6 +176,8 @@ namespace Visitor {
         static std::unique_ptr<llvm::Module> _TheModule;
         static std::map<std::string, llvm::AllocaInst*> _NamedValues;
 
+        void declareRuntimeFns();
+
         public:
         virtual void visit(AST::BaseStmt* stmt) { std::cout << "Typechecker visitor " << std::endl; };
         virtual void visit(AST::StmtBlockStmt* stmtBlock) override;

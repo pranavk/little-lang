@@ -55,6 +55,52 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateAllocaArray(llvm::Function* fun
     return arrayAlloca;
 }
 
+void Visitor::CodegenVisitor::declareRuntimeFns()
+{
+    if (!(_TheModule->getFunction("_l_print_string")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
+                                                               llvm::Type::getInt8PtrTy(_TheContext),
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                "_l_print_string", _TheModule.get());
+    }
+
+    if (!(_TheModule->getFunction("_l_print_int")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
+                                                               CreateLLVMType(Token::Type_int),
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                            "_l_print_int", _TheModule.get());
+    }
+
+    if (!(_TheModule->getFunction("_l_input")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "_l_input", _TheModule.get());
+    }
+
+    if (!(_TheModule->getFunction("_l_pow")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+                                                               {CreateLLVMType(Token::Type_int), CreateLLVMType(Token::Type_int)},
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "_l_pow", _TheModule.get());
+    }
+
+    if (!(_TheModule->getFunction("_l_abort")))
+    {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                      "_l_abort", _TheModule.get());
+    }
+}
+
 void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
 {
     for (auto &stmt : stmtBlock->stmt_list)
@@ -89,16 +135,14 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
 {
-    //FIXME: properly pass the arguments to print statement
-    llvm::Function* func = nullptr;
-    if (!(func = _TheModule->getFunction("print")))
-    {
-        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
-                                                               false);
-        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "print", _TheModule.get());
+    for (auto& arg : stmt->args) {
+        arg->accept(this);
+        if (auto strExpr = dynamic_cast<AST::StringLiteralExpr*>(arg.get())) {
+            _Builder.CreateCall(_TheModule->getFunction("_l_print_string"), {strExpr->llvmVal});
+        } else {
+            _Builder.CreateCall(_TheModule->getFunction("_l_print_int"), {arg->llvmVal});
+        }
     }
-    stmt->llvmVal = _Builder.CreateCall(func);
 }
 
 void Visitor::CodegenVisitor::visit(AST::IfStmt *stmt)
@@ -207,30 +251,7 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
 {
-    //FIXME: properly pass the arguments to abort statement
-    llvm::Function* func = nullptr;
-    if (!(func = _TheModule->getFunction("abort")))
-    {
-        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
-                                                               false);
-        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "abort", _TheModule.get());
-    }
-    stmt->llvmVal = _Builder.CreateCall(func);
-
-    // below we return a dummy value; it's unreachable anyways but llvm requires each BB to be
-    // terminated with a terminator instruction. "unreachable" would have been best in this
-    // but it doesn't work for me.
-    /*
-    func = _Builder.GetInsertBlock()->getParent();
-    auto retType = func->getReturnType();
-    if (retType->isIntegerTy() && retType->getIntegerBitWidth() == 1)
-        _Builder.CreateRet(llvm::ConstantInt::get(CreateLLVMType(Token::Type_bool), false));
-    else if (retType->isIntegerTy())
-        _Builder.CreateRet(llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 1));
-    else
-        _Builder.CreateRetVoid();
-    */
+    stmt->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_abort"));
     _Builder.CreateUnreachable();
 }
 
@@ -288,6 +309,7 @@ void Visitor::CodegenVisitor::visit(AST::LiteralExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::StringLiteralExpr *expr)
 {
+    expr->llvmVal = _Builder.CreateGlobalStringPtr(expr->val);
 }
 
 void Visitor::CodegenVisitor::visit(AST::TernaryExpr* expr)
@@ -350,16 +372,7 @@ void Visitor::CodegenVisitor::visit(AST::BinopExpr* expr)
             break;
         case Token::Op_exp:
         {
-            llvm::Function *func = nullptr;
-            if (!(func = _TheModule->getFunction("pow")))
-            {
-                llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
-                                                                       {CreateLLVMType(Token::Type_int), CreateLLVMType(Token::Type_int)},
-                                                                       false);
-                func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                              "pow", _TheModule.get());
-            }
-            expr->llvmVal = _Builder.CreateCall(func, {lhsV, rhsV});
+            expr->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_pow"), {lhsV, rhsV});
         }
         break;
         default:
@@ -386,32 +399,18 @@ void Visitor::CodegenVisitor::visit(AST::UnaryExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
 {
-    //FIXME: properly pass the arguments to abort statement
-    llvm::Function* func = nullptr;
-    if (!(func = _TheModule->getFunction("sizeof")))
-    {
-     //   std::vector<llvm::Type*> argTypes = { CreateLLVMType(Token::Type_array) };
-        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
-                            //                                   argTypes,
-                                                               false);
-        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "sizeof", _TheModule.get());
-    }
-    expr->llvmVal = _Builder.CreateCall(func);
+    AST::IdExpr* arrId = dynamic_cast<AST::IdExpr*>(expr->idExpr.get());
+    if (!arrId)
+        throw Exception("found unexpected array identifier");
+
+    llvm::Value* arrayAlloca = _NamedValues[arrId->name];
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    expr->llvmVal = _Builder.CreateLoad(sizePtr);
 }
 
 void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 {
-     //FIXME: properly pass the arguments to abort statement
-    llvm::Function* func = nullptr;
-    if (!(func = _TheModule->getFunction("input")))
-    {
-        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
-                                                               false);
-        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "input", _TheModule.get());
-    }
-    expr->llvmVal = _Builder.CreateCall(func);
+    expr->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_input"));
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
@@ -442,6 +441,7 @@ void Visitor::CodegenVisitor::visit(AST::FnCallExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::Program* program)
 {
+    declareRuntimeFns();
     // add functions to symbol table in first pass
     for (auto &fnDef : program->fnDefinitions)
     {
