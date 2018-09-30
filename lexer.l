@@ -1,5 +1,7 @@
 %{
 #include "consts.hpp"
+
+std::string tokenVal;
 %}
 
 DIGIT [0-9]
@@ -9,7 +11,7 @@ ID {ALPHA}+({ALPHA}|{DIGIT})*
 NUMBER [-]?{DIGIT}+
 
 /* useful to tell user about lineno. when parser errs. */
-%option yylineno 
+%option yylineno
 /* behaves as if yywrap() returns 1 if following is defined. */
 %option noyywrap
 
@@ -41,7 +43,23 @@ NUMBER [-]?{DIGIT}+
 "?"                        { return static_cast<int>(Token::Op_question); }
 "!"                        { return static_cast<int>(Token::Op_bang); }
 ","                        { return static_cast<int>(Token::Comma); }
-\"(\\.|[^\\"])*\"          { return static_cast<int>(Token::Literal_string); }
+\"(\\.|[^\\"])*\"          {
+                             std::string res;
+                             for (int i = 0; i < strlen(yytext); i++) {
+                                if (yytext[i] == '"') {
+                                    continue;
+                                }
+                                else if (i < strlen(yytext) - 1 && yytext[i] == '\\' && yytext[i + 1] == 'n') {
+                                    res.push_back('\n');
+                                    i++;
+                                    continue;
+                                }
+                                else
+                                    res.push_back(yytext[i]);
+                             }
+                             tokenVal = res;
+                             return static_cast<int>(Token::Literal_string);
+                           }
 
 "bool"                     { return static_cast<int>(Token::Type_bool); }
 "int"                      { return static_cast<int>(Token::Type_int); }

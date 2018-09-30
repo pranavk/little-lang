@@ -733,7 +733,10 @@ int main(int argc, char* argv[]) {
 
     int token = -1;
     while ((token = yylex()) != 0) {
-        tokens.push_back({yylineno, std::string(yytext), static_cast<Token>(token)});
+        if (static_cast<Token>(token) == Token::Literal_string)
+            tokens.push_back({yylineno, tokenVal, static_cast<Token>(token)});
+        else
+            tokens.push_back({yylineno, std::string(yytext), static_cast<Token>(token)});
     }
     tokens.push_back({yylineno, "EOF", Token::End});
 

@@ -3,13 +3,13 @@
 #include <string>
 #include <iostream>
 
-enum class ExceptionType 
+enum class ExceptionType
 {
     Parser,
     Type
 };
 
-class Exception : public std::runtime_error 
+class Exception : public std::runtime_error
 {
     ExceptionType _type;
     public:
@@ -115,7 +115,7 @@ inline bool isBinOp(Token tok) {
 }
 
 inline bool isBinOp(int tok)
-{ 
+{
     bool res = false;
     switch(static_cast<Token>(tok))
     {
@@ -150,7 +150,7 @@ inline bool isAndOr(Token op) {
             res = true;
     }
 
-    return res;   
+    return res;
 }
 
 inline bool isCompOp(Token op) {
@@ -176,12 +176,13 @@ inline bool isEqOrNeq(Token op) {
         case Token::Op_neq:
             res = true;
     }
-    
+
     return res;
 }
 
 extern int yylineno;
 extern char* yytext;
+extern std::string tokenVal;
 
 int yylex();
 void yyrestart(FILE* fp);
