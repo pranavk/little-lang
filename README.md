@@ -14,5 +14,14 @@ You can do:
 
 `ctest` to run the tests. Tests assume that passing-tests/ and failing-tests/ directory are one level up than the root directory (this is for my own convenience)
 
+## Compiling and executing .lil files
 
+You have a file, `lil.lil`. You compile it to LLVM IR like follows:
 
+`./lilang lil.lil --print-ir=a.bc`
+
+The file `a.bc` now contains the LLVM IR in textual form. If you want to execute it, you need to link it with the runtime file as follows:
+
+`clang runtime.c a.bc -o file.out`
+
+Then execute the file.out and see the live action.
