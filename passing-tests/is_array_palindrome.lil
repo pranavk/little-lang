@@ -10,8 +10,13 @@ int main() {
 		arr[i] := input()
 		i := (i + 1)
 	}
+	if (_is_array_palindrome_(arr)) {
+		print("this array is palindrome")
+	} else {
+		print("this array is not a palindrome")
+	}
 
-	return (_is_array_palindrome_(arr) == true)
+	return ((_is_array_palindrome_(arr) == true) ? 0 : 1);
 }
 
 bool _is_array_palindrome_(array arr) {

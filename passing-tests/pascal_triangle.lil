@@ -2,7 +2,7 @@ void print_array(array arr) {
     int sz, i
     sz := sizeof(arr)
     i := 0
-    while (( i < n)) {
+    while (( i < sz)) {
         if ((arr[i] != 0)) {
             print(arr[i], " ")
         }
