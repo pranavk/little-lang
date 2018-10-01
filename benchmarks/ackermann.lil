@@ -1,0 +1,22 @@
+int ackermann(int a, int b) {
+	if ((a == 0)) {
+		return (b + 1)
+	}
+	if (((a > 0) & (b == 0))) {
+		return ackermann((a - 1), 1);
+	}
+	if (((a > 0) & (b > 0))) {
+		return ackermann((a - 1), ackermann(a, (b - 1)))
+	}
+	abort("give only positive values to me!!!")
+}
+
+int main() {
+	int a, b, c
+	print("I will find the ackermann(a, b). Now give me values of a and b.\n")
+	a := input()
+	b := input()
+	c := ackermann(a, b)
+	print("Ackermann(", a, ", ", b, ") = ", c, "\n");
+	return 0;
+}
