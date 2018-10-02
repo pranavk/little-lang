@@ -1,3 +1,67 @@
+# Syntax
+
+```
+program :=
+     <function \n>+ (NOTE: angular braces are used for grouping)
+
+function :=
+     type ident() stmtblock
+     type ident(type ident <, type ident>*) stmtblock
+
+type :=
+  bool
+  int
+  array
+  void
+
+stmtblock :=
+     {\n <stmt \n>* }
+
+stmt :=
+     stmtblock
+     type ident <, ident>*
+     array ident\[expr\] <, ident\[expr\]>*
+     print(<string|expr> <, <string|expr> >*
+     if (expr) stmtblock [else stmtblock]
+     while (expr) stmtblock
+     for (ident : expr) stmtblock
+     ident := expr
+     ident\[expr\] := expr
+     expr
+     ;[^\n]*
+     return [expr]
+     abort(<string|expr> <, <string|expr> >*
+
+expr :=
+     true
+     false
+     -?[0-9]+
+     ident
+     (expr ? expr : expr)
+     sizeof(ident)
+     input()
+     ident\[expr\]
+     ident()
+     ident(expr <, expr>*)
+     (expr binop expr)
+     (unaryop expr)
+
+binop :=
+     + - * ^ / % & | == != > >= < <=
+    (caret is exponentiation, we have no xor operator)
+
+unaryop :=
+    - !
+    (bang is Boolean not)
+
+string :=
+    " ('\\' ["nt\\] | [^\\\n"])*  "
+
+ident :=
+     [a-zA-Z_][a-zA-Z0-9_]*
+
+```
+
 # Building
 
 Create a buid directory for yourself and do:
@@ -12,11 +76,11 @@ Files that should be parsed by this compiler are in passing-tests/ and files tha
 
 You can do:
 
-`ctest` to run the tests. Tests assume that passing-tests/ and failing-tests/ directory are one level up than the root directory (this is for my own convenience)
+`ctest` to run the tests. 
 
 ## Compiling and executing .lil files
 
-You have a file, `lil.lil`. You compile it to LLVM IR like follows:
+Say you have a file, `lil.lil`. You compile it to LLVM IR like follows:
 
 `./lilang lil.lil --print-ir=a.bc`
 
