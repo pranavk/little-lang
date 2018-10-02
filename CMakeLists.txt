@@ -24,7 +24,12 @@ target_link_libraries(lilang ${llvm_libs})
 
 enable_testing()
 
-FILE(GLOB GOODFILES ${CMAKE_SOURCE_DIR}/../passing-tests/*.lil)
+if ("$ENV{GPGKEY}" STREQUAL "C7025AF7")
+	message("This is Pranav's personal computer.")
+	FILE(GLOB GOODFILES ${CMAKE_SOURCE_DIR}/../passing-tests/*.lil)
+else()
+	FILE(GLOB GOODFILES ${CMAKE_SOURCE_DIR}/passing-tests/*.lil)
+endif()
 foreach(file ${GOODFILES})
 	add_test(NAME passingtests_${file}
 			COMMAND lilang ${file})
@@ -33,7 +38,11 @@ foreach(file ${GOODFILES})
 						LABELS "PASSING-TESTS")
 endforeach(file ${GOODFILES})
 
-FILE(GLOB BADFILES ${CMAKE_SOURCE_DIR}/../failing-tests/*.lil)
+if ("$ENV{GPGKEY}" STREQUAL "C7025AF7")
+	FILE(GLOB BADFILES ${CMAKE_SOURCE_DIR}/../failing-tests/*.lil)
+else()
+	FILE(GLOB BADFILES ${CMAKE_SOURCE_DIR}/failing-tests/*.lil)
+endif()
 foreach(file ${BADFILES})
 	add_test(NAME failingtests_${file}
 			COMMAND lilang ${file})
