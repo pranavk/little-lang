@@ -695,7 +695,7 @@ void parseProgram(AST::Program& program)
         if (!match(Token::EOL))
             throw Exception("New line required after fn body.");
         skipEOLs();
-        if (match(Token::End))
+        if (static_cast<Token>(curTok) == Token::End)
             break;
     }
 }
