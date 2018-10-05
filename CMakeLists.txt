@@ -22,6 +22,11 @@ add_library(flex STATIC IMPORTED GLOBAL)
 add_executable(lilang ${SRCFILES} ${FLEX_lilFlex_OUTPUTS})
 target_link_libraries(lilang ${llvm_libs})
 
+add_custom_command(TARGET lilang POST_BUILD
+		   COMMAND clang -c ${CMAKE_SOURCE_DIR}/runtime.c)
+add_custom_command(TARGET lilang POST_BUILD
+		   COMMAND cp ${CMAKE_SOURCE_DIR}/wrapper_script ${CMAKE_CURRENT_BINARY_DIR}/little)
+
 enable_testing()
 
 if ("$ENV{GPGKEY}" STREQUAL "C7025AF7")
