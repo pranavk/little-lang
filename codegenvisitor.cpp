@@ -213,6 +213,10 @@ void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
     if (!idExpr || !contExpr)
         throw Exception("For stmt doesn't contain any valid id or container expr.");
 
+    // declare the variable in for statement
+    llvm::AllocaInst* forIdentAlloca = _Builder.CreateAlloca(CreateLLVMType(Token::Type_int), 0, idExpr->name);
+    _NamedValues[idExpr->name] = forIdentAlloca;
+
     llvm::Value* arrayAlloca = _NamedValues[contExpr->name];
     llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
     llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});

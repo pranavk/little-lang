@@ -73,6 +73,14 @@ void Visitor::TypecheckerVisitor::visit(AST::WhileStmt *stmt)
 
 void Visitor::TypecheckerVisitor::visit(AST::ForStmt *stmt)
 {
+    EnterScope();
+    // declare variable before : in the for statement
+    AST::IdExpr* idExpr = dynamic_cast<AST::IdExpr*>(stmt->ident.get());
+    if (!idExpr)
+        throw Exception("Malformed for statement; expected an identifier, got something else.");
+    if (!_symTab->addSymbol(idExpr->name, Token::Type_int))
+        throw Exception("Redeclaring identifier, "  + idExpr->name + " in for statement.");
+
     stmt->ident->accept(this);
     if (!stmt->ident->result->isIntValue())
         throw Exception("Id expected in for stmt before colon", ExceptionType::Type);
@@ -82,6 +90,8 @@ void Visitor::TypecheckerVisitor::visit(AST::ForStmt *stmt)
         throw Exception("array expected in for stmt after colon", ExceptionType::Type);
 
     stmt->body->accept(this);
+    LeaveScope();
+
 }
 
 void Visitor::TypecheckerVisitor::visit(AST::ReturnStmt *stmt)
