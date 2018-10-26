@@ -84,7 +84,7 @@ namespace Visitor {
     };
 
     class PrintASTVisitor : public BaseVisitor {
-        int _depth = 0;
+        unsigned _depth = 0;
 
         void print(const std::vector<std::string>& str);
 

@@ -45,7 +45,7 @@ NUMBER [-]?{DIGIT}+
 ","                        { return static_cast<int>(Token::Comma); }
 \"(\\.|[^\\"])*\"          {
                              std::string res;
-                             for (int i = 0; i < strlen(yytext); i++) {
+                             for (size_t i = 0; i < strlen(yytext); i++) {
                                 if (yytext[i] == '"') {
                                     continue;
                                 }

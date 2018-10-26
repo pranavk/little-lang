@@ -17,6 +17,11 @@ add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(llvm_libs core support irreader)
 
 FILE(GLOB SRCFILES *.cpp)
+# Set file properties on all files except generated ones
+set(SRC_FILE_LIST ${SRCFILES})
+list(REMOVE_ITEM SRC_FILE_LIST ${CMAKE_SOURCE_DIR}/scanner.cpp)
+set_source_files_properties(${SRC_FILE_LIST}
+			    PROPERTIES COMPILE_FLAGS "-Wall")
 add_library(flex STATIC IMPORTED GLOBAL)
 
 add_executable(lilang ${SRCFILES} ${FLEX_lilFlex_OUTPUTS})

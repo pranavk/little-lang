@@ -338,7 +338,6 @@ std::unique_ptr<AST::BaseStmt> parseArrayDecls(int tokIdx)
     if (match(Token::Type_array))
     {
         match(Token::Type_array); // consume 'array'
-        const Token type = Token::Type_array;
         std::unique_ptr<AST::ArrayDeclStmt> arrayDeclStmt(new AST::ArrayDeclStmt);
         bool first = true;
         while (curTok != static_cast<int>(Token::EOL))

@@ -106,7 +106,7 @@ void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
     for (auto &stmt : stmtBlock->stmt_list)
     {
         stmt->accept(this);
-        if (auto retStmt = dynamic_cast<AST::ReturnStmt*>(stmt.get())) {
+        if (dynamic_cast<AST::ReturnStmt*>(stmt.get())) {
             break; // no need to process other stmts now
         }
     }

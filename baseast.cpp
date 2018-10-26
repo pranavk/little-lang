@@ -40,7 +40,7 @@ std::unique_ptr<AST::BaseValue> AST::createValue(Token type) {
 AST::PrintStmt::PrintStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
 {
     args.clear();
-    for (int i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < vec.size(); i++)
     {
         args.push_back(std::move(vec[i]));
     }
@@ -49,7 +49,7 @@ AST::PrintStmt::PrintStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
 AST::AbortStmt::AbortStmt(std::vector<std::unique_ptr<BaseExpr>> &vec)
 {
     args.clear();
-    for (int i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < vec.size(); i++)
     {
         args.push_back(std::move(vec[i]));
     }
@@ -60,7 +60,7 @@ AST::FnCallExpr::FnCallExpr(std::string name,
                             : name(name)
 {
     fnArgs.clear();
-    for (int i = 0; i < fnArgs1.size(); i++)
+    for (size_t i = 0; i < fnArgs1.size(); i++)
     {
         fnArgs.push_back(std::move(fnArgs1[i]));
     }

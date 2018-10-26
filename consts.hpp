@@ -148,6 +148,9 @@ inline bool isAndOr(Token op) {
         case Token::Op_and:
         case Token::Op_or:
             res = true;
+            break;
+        default:
+            res = false;
     }
 
     return res;
@@ -164,6 +167,9 @@ inline bool isCompOp(Token op) {
         case Token::Op_lte:
         case Token::Op_bang:
             res = true;
+            break;
+        default:
+            res = false;
     }
 
     return res;
@@ -175,6 +181,10 @@ inline bool isEqOrNeq(Token op) {
         case Token::Op_eqeq:
         case Token::Op_neq:
             res = true;
+            break;
+        default:
+            res = false;
+            break;
     }
 
     return res;

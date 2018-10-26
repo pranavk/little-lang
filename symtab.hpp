@@ -39,8 +39,8 @@ class FnSymbolInfo : public SymbolInfo {
     public:
     AST::FunctionPrototype* getFnProto() override { return _proto; }
     FnSymbolInfo(AST::FunctionPrototype* proto)
-            : _proto(proto)
-            , SymbolInfo(SymbolType::Function) { }
+            : SymbolInfo(SymbolType::Function)
+            , _proto(proto) { }
 };
 
 class SymbolTable

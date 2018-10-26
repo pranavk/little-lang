@@ -5,11 +5,11 @@
 
 void Visitor::PrintASTVisitor::print(const std::vector<std::string>& vec)
 {
-    for (int i = 0; i < _depth; i++)
+    for (unsigned i = 0; i < _depth; i++)
     {
         std::cout << "\t";
     }
-    for (int i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < vec.size(); i++)
     {
         std::cout << vec[i];
     }
