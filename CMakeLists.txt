@@ -8,7 +8,7 @@ find_package(FLEX REQUIRED)
 message(STATUS "Found Flex ${FLEX_VERSION}")
 FLEX_TARGET(lilFlex ${CMAKE_SOURCE_DIR}/lexer.l ${CMAKE_SOURCE_DIR}/scanner.cpp)
 
-find_package(LLVM 6.0.1 REQUIRED CONFIG)
+find_package(LLVM 7.0.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
