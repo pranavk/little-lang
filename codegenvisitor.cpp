@@ -3,6 +3,7 @@
 
 #include <llvm/IR/DerivedTypes.h>
 
+#include "utils.hpp"
 #include "baseast.hpp"
 #include "visitor.hpp"
 #include "symtab.hpp"
@@ -15,9 +16,14 @@ std::map<std::string, llvm::AllocaInst*> Visitor::CodegenVisitor::_NamedValues;
 
 llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
 {
+    unsigned intWidth = 64;
+    std::string width = Lilang::Settings::get().getOptionValue("width");
+    if (!width.empty()) {
+        intWidth = std::stoul(width);
+    }
     switch(type) {
         case Token::Type_int:
-            return llvm::Type::getInt64Ty(_TheContext);
+            return llvm::Type::getIntNTy(_TheContext, intWidth);
         break;
         case Token::Type_bool:
             return llvm::Type::getInt1Ty(_TheContext);
@@ -26,7 +32,7 @@ llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
             return llvm::Type::getVoidTy(_TheContext);
         break;
         case Token::Type_array:
-            return llvm::StructType::get(_TheContext, {llvm::Type::getInt64Ty(_TheContext),
+            return llvm::StructType::get(_TheContext, {llvm::Type::getIntNTy(_TheContext, intWidth),
                                                 llvm::PointerType::get(CreateLLVMType(Token::Type_int), 0)});
         default:
             return nullptr;
@@ -218,12 +224,12 @@ void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
     _NamedValues[idExpr->name] = forIdentAlloca;
 
     llvm::Value* arrayAlloca = _NamedValues[contExpr->name];
-    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
-    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
     llvm::Value* data = _Builder.CreateLoad(dataPtr);
     llvm::Value* size = _Builder.CreateLoad(sizePtr);
-    llvm::Value* counterAlloca = _Builder.CreateAlloca(llvm::Type::getInt64Ty(_TheContext));
-    _Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), counterAlloca);
+    llvm::Value* counterAlloca = _Builder.CreateAlloca(CreateLLVMType(Token::Type_int));
+    _Builder.CreateStore(llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), counterAlloca);
     _Builder.CreateBr(loopHdr);
 
      // move to the loop header BB
@@ -236,7 +242,7 @@ void Visitor::CodegenVisitor::visit(AST::ForStmt *stmt)
     llvm::Value* elePtr = _Builder.CreateGEP(data, counterV);
     _Builder.CreateStore(_Builder.CreateLoad(elePtr), _NamedValues[idExpr->name]);
     stmt->body->accept(this);
-    counterV = _Builder.CreateAdd(counterV, llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 1));
+    counterV = _Builder.CreateAdd(counterV, llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 1));
     _Builder.CreateStore(counterV, counterAlloca);
     _Builder.CreateBr(loopHdr);
 
@@ -296,7 +302,7 @@ void Visitor::CodegenVisitor::visit(AST::FalseExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::NumExpr *expr)
 {
-    expr->llvmVal = llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), expr->val);
+    expr->llvmVal = llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), expr->val);
 }
 
 void Visitor::CodegenVisitor::visit(AST::IdExpr *expr)
@@ -408,7 +414,7 @@ void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
         throw Exception("found unexpected array identifier");
 
     llvm::Value* arrayAlloca = _NamedValues[arrId->name];
-    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(llvm::Type::getInt64Ty(_TheContext), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
     expr->llvmVal = _Builder.CreateLoad(sizePtr);
 }
 

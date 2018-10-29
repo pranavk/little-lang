@@ -11,6 +11,7 @@
 #include "consts.hpp"
 #include "baseast.hpp"
 #include "visitor.hpp"
+#include "utils.hpp"
 
 struct TokenInfo {
     int lineno;
@@ -25,30 +26,13 @@ int curTok = -1;
 int curTokIdx = -1;
 std::string curVal;
 
-static std::set<std::string> args;
-bool isOn(const std::string& opt) {
-    // only compare the part before "="
-    for (auto& arg : args) {
-        if (opt == arg.substr(0, arg.find("=")))
-            return true;
-    }
-    return false;
-}
-
-std::string getOptionValue(const std::string& key) {
-    for (auto& arg : args) {
-        if (arg.find("=") != std::string::npos && key == arg.substr(0, arg.find("=")))
-            return arg.substr(arg.find("=") + 1);
-    }
-    return ""; // no value set in option
-}
-
 void printHelp(const std::string& commandName)
 {
     std::cout << commandName << " OPTIONS FILENAME" << std::endl;
     std::cout << "OPTIONS" << std::endl;
     std::cout << "\t--print-ast\t\tPrints the AST of the parsed program" << std::endl;
     std::cout << "\t--print-ir=[FILENAME]\tPrints the LLVM IR of the program. If FILENAME is specified, it's written there instead of stdout." << std::endl;
+    std::cout << "\t-width=N\t\tUnderlying integer width of int datatype in the language. By default, N = 64" << std::endl;
     std::cout << "\t--help\t\t\tPrints this help" << std::endl;
 }
 
@@ -701,16 +685,20 @@ void parseProgram(AST::Program& program)
 
 int main(int argc, char* argv[]) {
     std::string filename;
+    Lilang::Settings& settingsInst = Lilang::Settings::get();
     for (int i = 1; i < argc; i++) {
         std::string tmp = std::string(argv[i]);
-        if (tmp.length() > 2 && tmp[0] == '-' && tmp[1] == '-') {
-            args.insert(tmp.substr(2));
+        if (tmp.length() > 2 && tmp[0] == '-') {
+            if (tmp[1] == '-')
+                settingsInst.add(tmp.substr(2));
+            else
+                settingsInst.add(tmp.substr(1));
         } else {
             filename = tmp;
         }
     }
 
-    if (isOn("help")) {
+    if (settingsInst.isOn("help")) {
         printHelp(argv[0]);
         return 0;
     }
@@ -747,7 +735,7 @@ int main(int argc, char* argv[]) {
         std::cout << "* Parsing file: " << filename << " ... ";
         parseProgram(programNode);
         std::cout << "OK" << std::endl;
-        if (isOn("print-ast")) {
+        if (settingsInst.isOn("print-ast")) {
             Visitor::PrintASTVisitor printVisitor;
             printVisitor.visit(&programNode);
         }
@@ -776,9 +764,9 @@ int main(int argc, char* argv[]) {
         codegenVisitor.getModule()->setSourceFileName(filename);
         codegenVisitor.visit(&programNode);
         std::cout << "OK" << std::endl;
-        if (isOn("print-ir")) {
+        if (settingsInst.isOn("print-ir")) {
             llvm::raw_ostream& outHandle = llvm::outs();
-            std::string optVal = getOptionValue("print-ir");
+            std::string optVal = settingsInst.getOptionValue("print-ir");
             if (!optVal.empty()) {
                 std::error_code errc;
                 llvm::raw_fd_ostream outfile(optVal, errc, llvm::sys::fs::OpenFlags::F_None);
