@@ -14,6 +14,20 @@ std::unique_ptr<llvm::Module> Visitor::CodegenVisitor::_TheModule = llvm::make_u
 llvm::IRBuilder<> Visitor::CodegenVisitor::_Builder(Visitor::CodegenVisitor::_TheContext);
 std::map<std::string, llvm::AllocaInst*> Visitor::CodegenVisitor::_NamedValues;
 
+llvm::Value* Visitor::CodegenVisitor::UpdateToIntWidth(llvm::Value* val, size_t toWidth) {
+    if (!val->getType()->isIntegerTy())
+        return nullptr;
+
+    llvm::Value* res = val;
+    unsigned oldWidth = val->getType()->getIntegerBitWidth();
+    if (oldWidth < toWidth) {
+        res = _Builder.CreateSExt(val, llvm::Type::getIntNTy(_TheContext, toWidth));
+    } else if (oldWidth > toWidth) {
+        res = _Builder.CreateTrunc(val, llvm::Type::getIntNTy(_TheContext, toWidth));
+    }
+    return res;
+}
+
 llvm::Type* Visitor::CodegenVisitor::CreateLLVMType(const Token type)
 {
     unsigned intWidth = 64;
@@ -75,7 +89,7 @@ void Visitor::CodegenVisitor::declareRuntimeFns()
     if (!(_TheModule->getFunction("_l_print_int")))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
-                                                               CreateLLVMType(Token::Type_int),
+                                                               llvm::Type::getInt64Ty(_TheContext),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                             "_l_print_int", _TheModule.get());
@@ -83,7 +97,7 @@ void Visitor::CodegenVisitor::declareRuntimeFns()
 
     if (!(_TheModule->getFunction("_l_input")))
     {
-        llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
+        llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getInt64Ty(_TheContext),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                                       "_l_input", _TheModule.get());
@@ -146,6 +160,7 @@ void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
         if (auto strExpr = dynamic_cast<AST::StringLiteralExpr*>(arg.get())) {
             _Builder.CreateCall(_TheModule->getFunction("_l_print_string"), {strExpr->llvmVal});
         } else {
+            arg->llvmVal = UpdateToIntWidth(arg->llvmVal, 64);
             _Builder.CreateCall(_TheModule->getFunction("_l_print_int"), {arg->llvmVal});
         }
     }
@@ -420,7 +435,8 @@ void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 {
-    expr->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_input"));
+    auto val = _Builder.CreateCall(_TheModule->getFunction("_l_input"));
+    expr->llvmVal = UpdateToIntWidth(val, Lilang::Settings::get().getWidth());
 }
 
 void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)

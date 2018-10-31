@@ -209,6 +209,10 @@ namespace Visitor {
 
         virtual void visit(AST::Program*) override;
 
+        // assumes that `val' passed to it is integer;
+        // update the integer width and return a new llvm::Value*
+        static llvm::Value* UpdateToIntWidth(llvm::Value* val, size_t to);
+
         static llvm::Type* CreateLLVMType(const Token type);
 
         static llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Function* func,

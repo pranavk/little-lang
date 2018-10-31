@@ -31,6 +31,14 @@ namespace Lilang {
             return ""; // no value set in option
         }
 
+        size_t getWidth() {
+            size_t res = 64;
+            std::string str = getOptionValue("width");
+            if (!str.empty())
+                res = std::stoul(str);
+            return res;
+        }
+
         static Settings& get() {
             static Settings SettingsInstance;
             return SettingsInstance;
