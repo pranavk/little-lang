@@ -21,6 +21,9 @@ llvm::Value* Visitor::CodegenVisitor::UpdateToIntWidth(llvm::Value* val, size_t 
 
     llvm::Value* res = val;
     unsigned oldWidth = val->getType()->getIntegerBitWidth();
+    if (oldWidth == 1)
+        return res;
+
     if (oldWidth < toWidth) {
         res = _Builder.CreateSExt(val, llvm::Type::getIntNTy(_TheContext, toWidth));
     } else if (oldWidth > toWidth) {
@@ -173,11 +176,12 @@ void Visitor::CodegenVisitor::declareRuntimeFns()
 
 void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
 {
+    AST::ReturnStmt* returnStmt = nullptr;
     _scope.push(stmtBlock);
     for (auto &stmt : stmtBlock->stmt_list)
     {
         stmt->accept(this);
-        if (dynamic_cast<AST::ReturnStmt*>(stmt.get())) {
+        if ((returnStmt = dynamic_cast<AST::ReturnStmt*>(stmt.get()))) {
             break; // no need to process other stmts now
         }
     }
@@ -194,6 +198,13 @@ void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
     }
 
     _scope.pop();
+
+    if (returnStmt) {
+        if (returnStmt->returnExpr)
+            _Builder.CreateRet(returnStmt->returnExpr->llvmVal);
+        else
+            _Builder.CreateRetVoid();
+    }
 }
 
 void Visitor::CodegenVisitor::visit(AST::VarDeclStmt *stmt)
@@ -336,9 +347,6 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
     if (stmt->returnExpr) {
         stmt->returnExpr->accept(this);
         stmt->returnExpr->llvmVal = UpdateToIntWidth(stmt->returnExpr->llvmVal, 64);
-        _Builder.CreateRet(stmt->returnExpr->llvmVal);
-    } else {
-        _Builder.CreateRetVoid();
     }
 }
 
