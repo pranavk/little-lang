@@ -477,8 +477,30 @@ void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
 {
     expr->expr->accept(this);
     llvm::Value* arrayAlloca = _NamedValues[expr->name];
+    llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
+    llvm::Value* size = _Builder.CreateLoad(sizePtr);
+
     llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
     llvm::Value* data = _Builder.CreateLoad(dataPtr);
+
+    llvm::Value* arrayLessThan = _Builder.CreateICmpSLT(expr->expr->llvmVal, size);
+
+    llvm::Function* func = _Builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* gt0checkBB = llvm::BasicBlock::Create(_TheContext, "gt0checkbb", func);
+    llvm::BasicBlock* failBB = llvm::BasicBlock::Create(_TheContext, "failbb", func);
+    llvm::BasicBlock* fullyPassBB = llvm::BasicBlock::Create(_TheContext, "fullypassbb", func);
+
+    _Builder.CreateCondBr(arrayLessThan, gt0checkBB, failBB);
+
+    _Builder.SetInsertPoint(failBB);
+    _Builder.CreateCall(_TheModule->getFunction("_l_abort"));
+    _Builder.CreateUnreachable();
+
+    _Builder.SetInsertPoint(gt0checkBB);
+    llvm::Value* arrayGreaterThan = _Builder.CreateICmpSGE(expr->expr->llvmVal, llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0));
+    _Builder.CreateCondBr(arrayGreaterThan, fullyPassBB, failBB);
+
+    _Builder.SetInsertPoint(fullyPassBB);
     llvm::Value* elePtr = _Builder.CreateGEP(data, expr->expr->llvmVal);
     expr->llvmVal = _Builder.CreateLoad(elePtr);
 }
