@@ -64,7 +64,7 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateEntryBlockAlloca(llvm::Function
     if (llvmType->isSized()) {
         const llvm::DataLayout& dl = _TheModule->getDataLayout();
         uint64_t bitsSize = dl.getTypeSizeInBits(llvmType);
-        tmpB.CreateCall(_TheModule->getFunction("llvm.memset.p0i8.i64"), {_Builder.CreateBitCast(allocaInst, llvm::Type::getInt8PtrTy(_TheContext)),
+        tmpB.CreateCall(_TheModule->getFunction("llvm.memset.p0i8.i64"), {tmpB.CreateBitCast(allocaInst, llvm::Type::getInt8PtrTy(_TheContext)),
                                                                         llvm::ConstantInt::get(llvm::Type::getInt8Ty(_TheContext), 0),
                                                                          llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), bitsSize/8),
                                                                         llvm::ConstantInt::getFalse(_TheContext)});
