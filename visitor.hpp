@@ -4,6 +4,8 @@
 #include <cassert>
 #include <unordered_map>
 #include <memory>
+#include <stack>
+#include <utility>
 
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
@@ -176,6 +178,11 @@ namespace Visitor {
         static std::unique_ptr<llvm::Module> _TheModule;
         static std::map<std::string, llvm::AllocaInst*> _NamedValues;
 
+        // holds the pointer to the current scope
+        std::stack<AST::StmtBlockStmt*> _scope;
+
+        // holds pointer to any array decls alongwith the scope in which it was declared
+        std::stack<std::pair<AST::StmtBlockStmt*, llvm::Value*>> _arrayDecls;
         void declareRuntimeFns();
 
         public:

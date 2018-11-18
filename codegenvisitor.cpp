@@ -119,10 +119,27 @@ void Visitor::CodegenVisitor::declareRuntimeFns()
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                                       "_l_abort", _TheModule.get());
     }
+
+    // stacksave, stackrestore used for dynamic array allocation/deallocation
+    if (!(_TheModule->getFunction("llvm.stacksave"))) {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getInt8PtrTy(_TheContext),
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                               "llvm.stacksave", _TheModule.get());
+    }
+
+    if (!(_TheModule->getFunction("llvm.stackrestore"))) {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getVoidTy(_TheContext),
+                                                               {llvm::Type::getInt8PtrTy(_TheContext)},
+                                                               false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                               "llvm.stackrestore", _TheModule.get());
+    }
 }
 
 void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
 {
+    _scope.push(stmtBlock);
     for (auto &stmt : stmtBlock->stmt_list)
     {
         stmt->accept(this);
@@ -130,6 +147,19 @@ void Visitor::CodegenVisitor::visit(AST::StmtBlockStmt *stmtBlock)
             break; // no need to process other stmts now
         }
     }
+
+    // deallocate any array declaration
+    while (!_arrayDecls.empty())
+    {
+        auto decl = _arrayDecls.top();
+        if (decl.first != stmtBlock)
+            break;
+
+        _Builder.CreateCall(_TheModule->getFunction("llvm.stackrestore"), {decl.second});
+        _arrayDecls.pop();
+    }
+
+    _scope.pop();
 }
 
 void Visitor::CodegenVisitor::visit(AST::VarDeclStmt *stmt)
@@ -148,6 +178,9 @@ void Visitor::CodegenVisitor::visit(AST::ArrayDeclStmt *stmt)
     for (auto& var : stmt->decls)
     {
         var.expr->accept(this);
+        llvm::Value* stacksavecall = _Builder.CreateCall(_TheModule->getFunction("llvm.stacksave"));
+        AST::StmtBlockStmt* curScope = _scope.top();
+        _arrayDecls.push({curScope, stacksavecall});
         llvm::AllocaInst* alloca = CreateAllocaArray(func, var.name, var.expr->llvmVal);
         _NamedValues[var.name] = alloca;
     }
