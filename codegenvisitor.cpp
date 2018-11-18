@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 
+#include <llvm/IR/DataLayout.h>
 #include <llvm/IR/DerivedTypes.h>
 
 #include "utils.hpp"
@@ -58,7 +59,17 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateEntryBlockAlloca(llvm::Function
                                                                   const Token type)
 {
     llvm::IRBuilder<> tmpB(&func->getEntryBlock(), func->getEntryBlock().begin());
-    return tmpB.CreateAlloca(CreateLLVMType(type), 0, varName.c_str());
+    auto llvmType = CreateLLVMType(type);
+    auto allocaInst = tmpB.CreateAlloca(CreateLLVMType(type), 0, varName.c_str());
+    if (llvmType->isSized()) {
+        const llvm::DataLayout& dl = _TheModule->getDataLayout();
+        uint64_t bitsSize = dl.getTypeSizeInBits(llvmType);
+        tmpB.CreateCall(_TheModule->getFunction("llvm.memset.p0i8.i64"), {_Builder.CreateBitCast(allocaInst, llvm::Type::getInt8PtrTy(_TheContext)),
+                                                                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(_TheContext), 0),
+                                                                         llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), bitsSize/8),
+                                                                        llvm::ConstantInt::getFalse(_TheContext)});
+    }
+    return allocaInst;
 }
 
 llvm::AllocaInst* Visitor::CodegenVisitor::CreateAllocaArray(llvm::Function* func,
@@ -70,7 +81,18 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateAllocaArray(llvm::Function* fun
     llvm::AllocaInst* arrayAlloca = _Builder.CreateAlloca(CreateLLVMType(Token::Type_array));
     llvm::Value* sizePtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 0)});
     _Builder.CreateStore(arrSize, sizePtr);
-    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+    auto dataType = CreateLLVMType(Token::Type_int);
+    llvm::Value* dataPtr = _Builder.CreateGEP(arrayAlloca, {llvm::ConstantInt::get(dataType, 0), llvm::ConstantInt::get(llvm::Type::getInt32Ty(_TheContext), 1)});
+
+    // memset 0 in the array
+    if (dataType->isSized()) {
+        const llvm::DataLayout& dl = _TheModule->getDataLayout();
+        uint64_t bitsSize = dl.getTypeSizeInBits(dataType);
+        auto len = _Builder.CreateMul(llvm::ConstantInt::get(CreateLLVMType(Token::Type_int), (bitsSize / 8)), arrSize);
+        _Builder.CreateCall(_TheModule->getFunction("llvm.memset.p0i8.i64"), {_Builder.CreateBitCast(dataAlloca, llvm::Type::getInt8PtrTy(_TheContext)),
+                                                                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(_TheContext), 0),
+                                                                        len,
+                                                                        llvm::ConstantInt::getFalse(_TheContext)});    }
     _Builder.CreateStore(dataAlloca, dataPtr);
     return arrayAlloca;
 }
@@ -134,6 +156,18 @@ void Visitor::CodegenVisitor::declareRuntimeFns()
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                                "llvm.stackrestore", _TheModule.get());
+    }
+
+    // all variables should be initialized to zero
+    if (!_TheModule->getFunction("llvm.memset.p0i8.i64")) {
+        llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getVoidTy(_TheContext),
+                                                            {llvm::Type::getInt8PtrTy(_TheContext),
+                                                             llvm::Type::getInt8Ty(_TheContext),
+                                                             llvm::Type::getInt64Ty(_TheContext),
+                                                             llvm::Type::getInt1Ty(_TheContext)},
+                                                             false);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                               "llvm.memset.p0i8.i64", _TheModule.get());
     }
 }
 
