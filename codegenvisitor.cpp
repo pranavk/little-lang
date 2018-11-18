@@ -268,6 +268,7 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 {
     if (stmt->returnExpr) {
         stmt->returnExpr->accept(this);
+        stmt->returnExpr->llvmVal = UpdateToIntWidth(stmt->returnExpr->llvmVal, 64);
         _Builder.CreateRet(stmt->returnExpr->llvmVal);
     } else {
         _Builder.CreateRetVoid();
