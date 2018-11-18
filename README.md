@@ -62,6 +62,11 @@ ident :=
 
 ```
 
+# Features
+
+* All variables are initialized to 0 by default, including array elements.
+* Any attempt to access or assign an array element out of bounds leads to program abort during execution.
+
 # Building
 
 Create a buid directory for yourself and do:
@@ -80,7 +85,15 @@ You can do:
 
 ## Compiling and executing .lil files
 
-Say you have a file, `lil.lil`. You compile it to LLVM IR like follows:
+Use the compiler driver (called `little`) that calls the frontend (called `lilang`) automatically and creates an executable `a.out` in the current directory.
+
+Eg:
+
+`./little lil.lil`
+
+The above compiler driver basically does following:
+
+Say you have a file, `lil.lil`. It compiles to LLVM IR like follows:
 
 `./lilang lil.lil --print-ir=a.bc`
 
@@ -88,4 +101,3 @@ The file `a.bc` now contains the LLVM IR in textual form. If you want to execute
 
 `clang runtime.c a.bc -o file.out`
 
-Then execute the file.out and see the live action.
