@@ -65,7 +65,7 @@ ident :=
 # Features
 
 * All variables are initialized to 0 by default, including array elements.
-* Any attempt to access or assign an array element out of bounds leads to program abort during execution.
+* Any attempt to access or assign an array element out of bounds traps.
 
 # Building
 

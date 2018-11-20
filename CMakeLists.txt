@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-g")
 
 find_package(FLEX REQUIRED)
 message(STATUS "Found Flex ${FLEX_VERSION}")
-FLEX_TARGET(lilFlex ${CMAKE_SOURCE_DIR}/lexer.l ${CMAKE_SOURCE_DIR}/scanner.cpp)
+FLEX_TARGET(lilFlex ${CMAKE_SOURCE_DIR}/src/lexer.l ${CMAKE_SOURCE_DIR}/src/scanner.cpp)
 
 find_package(LLVM 7.0.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -16,10 +16,10 @@ include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(llvm_libs core support irreader)
 
-FILE(GLOB SRCFILES *.cpp)
+FILE(GLOB SRCFILES src/*.cpp)
 # Set file properties on all files except generated ones
 set(SRC_FILE_LIST ${SRCFILES})
-list(REMOVE_ITEM SRC_FILE_LIST ${CMAKE_SOURCE_DIR}/scanner.cpp)
+list(REMOVE_ITEM SRC_FILE_LIST ${CMAKE_SOURCE_DIR}/src/scanner.cpp)
 set_source_files_properties(${SRC_FILE_LIST}
 			    PROPERTIES COMPILE_FLAGS "-Wall")
 add_library(flex STATIC IMPORTED GLOBAL)
@@ -30,7 +30,7 @@ target_link_libraries(lilang ${llvm_libs})
 add_custom_command(TARGET lilang POST_BUILD
 		   COMMAND clang -c ${CMAKE_SOURCE_DIR}/runtime.c)
 add_custom_command(TARGET lilang POST_BUILD
-		   COMMAND cp ${CMAKE_SOURCE_DIR}/wrapper_script ${CMAKE_CURRENT_BINARY_DIR}/little)
+		   COMMAND cp ${CMAKE_SOURCE_DIR}/driver.sh ${CMAKE_CURRENT_BINARY_DIR}/little)
 
 enable_testing()
 
