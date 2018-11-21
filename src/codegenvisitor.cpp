@@ -616,7 +616,7 @@ void Visitor::CodegenVisitor::visit(AST::Program* program)
     }
 
     // set 'main' linkage to external
-    dynamic_cast<llvm::GlobalValue*>(_TheModule->getFunction("main"))->setLinkage(llvm::Function::ExternalLinkage);
+    _TheModule->getFunction("main")->setLinkage(llvm::Function::ExternalLinkage);
 
     bool err = false;
     // iterate over individual funcs
