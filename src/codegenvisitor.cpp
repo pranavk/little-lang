@@ -9,6 +9,14 @@
 #include "visitor.hpp"
 #include "symtab.hpp"
 
+namespace IntrinsicFn {
+    constexpr auto printstring = "__l_print_string";
+    constexpr auto printint = "__l_print_int";
+    constexpr auto abort = "__l_abort";
+    constexpr auto pow = "__l_pow";
+    constexpr auto input = "__l_input";
+};
+
 // static variable init
 llvm::LLVMContext Visitor::CodegenVisitor::_TheContext;
 std::unique_ptr<llvm::Module> Visitor::CodegenVisitor::_TheModule = llvm::make_unique<llvm::Module>("lilang", Visitor::CodegenVisitor::_TheContext);
@@ -102,47 +110,47 @@ llvm::AllocaInst* Visitor::CodegenVisitor::CreateAllocaArray(llvm::Function* fun
 
 void Visitor::CodegenVisitor::declareRuntimeFns()
 {
-    if (!(_TheModule->getFunction("_l_print_string")))
+    if (!(_TheModule->getFunction(IntrinsicFn::printstring)))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
                                                                llvm::Type::getInt8PtrTy(_TheContext),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                "_l_print_string", _TheModule.get());
+                                IntrinsicFn::printstring, _TheModule.get());
     }
 
-    if (!(_TheModule->getFunction("_l_print_int")))
+    if (!(_TheModule->getFunction(IntrinsicFn::printint)))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
                                                                llvm::Type::getInt64Ty(_TheContext),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                            "_l_print_int", _TheModule.get());
+                                IntrinsicFn::printint, _TheModule.get());
     }
 
-    if (!(_TheModule->getFunction("_l_input")))
+    if (!(_TheModule->getFunction(IntrinsicFn::input)))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getInt64Ty(_TheContext),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "_l_input", _TheModule.get());
+                                      IntrinsicFn::input, _TheModule.get());
     }
 
-    if (!(_TheModule->getFunction("_l_pow")))
+    if (!(_TheModule->getFunction(IntrinsicFn::pow)))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_int),
                                                                {CreateLLVMType(Token::Type_int), CreateLLVMType(Token::Type_int)},
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "_l_pow", _TheModule.get());
+                                      IntrinsicFn::pow, _TheModule.get());
     }
 
-    if (!(_TheModule->getFunction("_l_abort")))
+    if (!(_TheModule->getFunction(IntrinsicFn::abort)))
     {
         llvm::FunctionType *funcType = llvm::FunctionType::get(CreateLLVMType(Token::Type_void),
                                                                false);
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                                      "_l_abort", _TheModule.get());
+                                      IntrinsicFn::abort, _TheModule.get());
     }
 
     // stacksave, stackrestore used for dynamic array allocation/deallocation
@@ -236,10 +244,10 @@ void Visitor::CodegenVisitor::visit(AST::PrintStmt *stmt)
     for (auto& arg : stmt->args) {
         arg->accept(this);
         if (auto strExpr = dynamic_cast<AST::StringLiteralExpr*>(arg.get())) {
-            _Builder.CreateCall(_TheModule->getFunction("_l_print_string"), {strExpr->llvmVal});
+            _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::printstring), {strExpr->llvmVal});
         } else {
             arg->llvmVal = UpdateToIntWidth(arg->llvmVal, 64);
-            _Builder.CreateCall(_TheModule->getFunction("_l_print_int"), {arg->llvmVal});
+            _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::printint), {arg->llvmVal});
         }
     }
 }
@@ -352,7 +360,7 @@ void Visitor::CodegenVisitor::visit(AST::ReturnStmt *stmt)
 
 void Visitor::CodegenVisitor::visit(AST::AbortStmt *stmt)
 {
-    stmt->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_abort"));
+    stmt->llvmVal = _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::abort));
     _Builder.CreateUnreachable();
 }
 
@@ -377,7 +385,7 @@ void Visitor::CodegenVisitor::visit(AST::ArrayAssignment *stmt)
     _Builder.CreateCondBr(arrayLessThan, gt0checkBB, failBB);
 
     _Builder.SetInsertPoint(failBB);
-    _Builder.CreateCall(_TheModule->getFunction("_l_abort"));
+    _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::abort));
     _Builder.CreateUnreachable();
 
     _Builder.SetInsertPoint(gt0checkBB);
@@ -497,7 +505,7 @@ void Visitor::CodegenVisitor::visit(AST::BinopExpr* expr)
             break;
         case Token::Op_exp:
         {
-            expr->llvmVal = _Builder.CreateCall(_TheModule->getFunction("_l_pow"), {lhsV, rhsV});
+            expr->llvmVal = _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::pow), {lhsV, rhsV});
         }
         break;
         default:
@@ -535,7 +543,7 @@ void Visitor::CodegenVisitor::visit(AST::SizeofExpr *expr)
 
 void Visitor::CodegenVisitor::visit(AST::InputExpr *expr)
 {
-    auto val = _Builder.CreateCall(_TheModule->getFunction("_l_input"));
+    auto val = _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::input));
     expr->llvmVal = UpdateToIntWidth(val, Lilang::Settings::get().getWidth());
 }
 
@@ -559,7 +567,7 @@ void Visitor::CodegenVisitor::visit(AST::ArrayExpr *expr)
     _Builder.CreateCondBr(arrayLessThan, gt0checkBB, failBB);
 
     _Builder.SetInsertPoint(failBB);
-    _Builder.CreateCall(_TheModule->getFunction("_l_abort"));
+    _Builder.CreateCall(_TheModule->getFunction(IntrinsicFn::abort));
     _Builder.CreateUnreachable();
 
     _Builder.SetInsertPoint(gt0checkBB);
